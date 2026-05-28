@@ -398,18 +398,201 @@ textarea{min-height:90px}
 
 <script>
 // ═══════════════════════════════════════════════════
-// LOCAL STORAGE — persists all data across sessions
+// SUPABASE CONFIG
 // ═══════════════════════════════════════════════════
+var SB_URL = 'https://kvrjfdjphxnqjdtzyrgi.supabase.co';
+var SB_KEY = 'sb_publishable_IlEszg09Y5VPxiT1Aocudw_pouVWccA';
+var currentUser = null;
+
+async function sbFetch(path, method, body) {
+  method = method || 'GET';
+  var token = localStorage.getItem('sb_token') || SB_KEY;
+  var opts = {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + token,
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : ''
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  var r = await fetch(SB_URL + path, opts);
+  if (!r.ok) { var e = await r.text(); throw new Error(e); }
+  var txt = await r.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
+// ── AUTH MODAL ──
+function showAuthModal() {
+  var existing = document.getElementById('auth-modal');
+  if (existing) existing.remove();
+  var modal = document.createElement('div');
+  modal.id = 'auth-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(14,26,43,0.96);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = '<div style="background:#1C2E45;border:1px solid rgba(184,151,58,0.4);border-radius:8px;padding:2.5rem;width:100%;max-width:420px;margin:1rem">'
+    + '<div style="font-family:\'Cormorant Garamond\',Georgia,serif;font-size:1.5rem;color:#E8D28A;margin-bottom:4px;font-weight:600">ExecEdge AI\u2122</div>'
+    + '<div style="font-family:\'DM Sans\',sans-serif;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:#8A6E26;margin-bottom:1.5rem">Sign in to save your progress across devices</div>'
+    + '<div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.75rem">'
+    + '<label style="font-family:\'DM Sans\',sans-serif;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:#7A8694">Email</label>'
+    + '<input id="auth-email" type="email" placeholder="your@email.com" style="background:rgba(255,255,255,0.06);border:1px solid rgba(184,151,58,0.25);border-radius:4px;color:#F8F5EE;font-family:\'DM Sans\',sans-serif;font-size:0.9rem;padding:0.6rem 0.75rem;width:100%;outline:none">'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1.25rem">'
+    + '<label style="font-family:\'DM Sans\',sans-serif;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:#7A8694">Password</label>'
+    + '<input id="auth-password" type="password" placeholder="Password (min 6 characters)" style="background:rgba(255,255,255,0.06);border:1px solid rgba(184,151,58,0.25);border-radius:4px;color:#F8F5EE;font-family:\'DM Sans\',sans-serif;font-size:0.9rem;padding:0.6rem 0.75rem;width:100%;outline:none">'
+    + '</div>'
+    + '<div id="auth-error" style="color:#FCA5A5;font-size:0.8rem;margin-bottom:0.75rem;display:none"></div>'
+    + '<button onclick="authSignIn()" style="background:#B8973A;border:none;border-radius:4px;color:#0E1A2B;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;padding:0.85rem;text-transform:uppercase;width:100%;margin-bottom:0.5rem">Sign In</button>'
+    + '<button onclick="authSignUp()" style="background:transparent;border:1px solid rgba(184,151,58,0.4);border-radius:4px;color:#B8973A;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:0.75rem;font-weight:600;letter-spacing:0.1em;padding:0.85rem;text-transform:uppercase;width:100%;margin-bottom:1rem">Create Account</button>'
+    + '<button onclick="skipAuth()" style="background:transparent;border:none;color:#7A8694;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;width:100%">Continue without account \u2192</button>'
+    + '</div>';
+  document.body.appendChild(modal);
+}
+
+async function authSignIn() {
+  var email = document.getElementById('auth-email').value.trim();
+  var password = document.getElementById('auth-password').value;
+  var errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+  try {
+    var r = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
+      body: JSON.stringify({ email: email, password: password })
+    });
+    var d = await r.json();
+    if (d.error || d.error_description) throw new Error(d.error_description || d.error);
+    currentUser = { id: d.user.id, email: d.user.email, token: d.access_token };
+    localStorage.setItem('sb_token', d.access_token);
+    localStorage.setItem('sb_uid', d.user.id);
+    localStorage.setItem('sb_email', d.user.email);
+    document.getElementById('auth-modal').remove();
+    updateUserUI();
+    await loadCloudData();
+  } catch(e) {
+    errEl.textContent = 'Sign in failed: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function authSignUp() {
+  var email = document.getElementById('auth-email').value.trim();
+  var password = document.getElementById('auth-password').value;
+  var errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+  try {
+    var r = await fetch(SB_URL + '/auth/v1/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
+      body: JSON.stringify({ email: email, password: password })
+    });
+    var d = await r.json();
+    if (d.error || d.error_description) throw new Error(d.error_description || d.error);
+    if (d.access_token) {
+      currentUser = { id: d.user.id, email: d.user.email, token: d.access_token };
+      localStorage.setItem('sb_token', d.access_token);
+      localStorage.setItem('sb_uid', d.user.id);
+      localStorage.setItem('sb_email', d.user.email);
+      document.getElementById('auth-modal').remove();
+      updateUserUI();
+    } else {
+      errEl.textContent = 'Account created. Check your email to confirm, then sign in.';
+      errEl.style.display = 'block';
+      errEl.style.color = '#6EE7B7';
+    }
+  } catch(e) {
+    errEl.textContent = 'Sign up failed: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function skipAuth() {
+  document.getElementById('auth-modal').remove();
+}
+
+function updateUserUI() {
+  var badge = document.getElementById('planBadgeWrap') || document.querySelector('.plan-badge-wrap');
+  if (badge && currentUser) {
+    var existing = document.getElementById('user-row');
+    if (existing) existing.remove();
+    var userRow = document.createElement('div');
+    userRow.id = 'user-row';
+    userRow.style.cssText = 'font-family:\'DM Sans\',sans-serif;font-size:10px;color:#8A6E26;margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:6px';
+    userRow.innerHTML = '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;color:rgba(232,210,138,0.6)">' + currentUser.email + '</span>'
+      + '<button onclick="signOut()" style="background:transparent;border:none;color:#7A8694;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;padding:0;white-space:nowrap">Sign out</button>';
+    badge.appendChild(userRow);
+  }
+}
+
+async function signOut() {
+  localStorage.removeItem('sb_token');
+  localStorage.removeItem('sb_uid');
+  localStorage.removeItem('sb_email');
+  currentUser = null;
+  location.reload();
+}
+
+// ── CLOUD SAVE / LOAD ──
+async function saveToCloud(key, value) {
+  // Always save locally first
+  try { localStorage.setItem('ee_' + key, value); } catch(e) {}
+  if (!currentUser) return;
+  try {
+    var token = localStorage.getItem('sb_token');
+    await fetch(SB_URL + '/rest/v1/execedge_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + token,
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ user_id: currentUser.id, data_key: key, data_value: value, updated_at: new Date().toISOString() })
+    });
+  } catch(e) { console.warn('Cloud save failed, saved locally:', e.message); }
+}
+
+async function loadCloudData() {
+  if (!currentUser) return;
+  try {
+    var token = localStorage.getItem('sb_token');
+    var r = await fetch(SB_URL + '/rest/v1/execedge_data?user_id=eq.' + currentUser.id, {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + token }
+    });
+    var rows = await r.json();
+    if (Array.isArray(rows)) {
+      rows.forEach(function(row) { localStorage.setItem('ee_' + row.data_key, row.data_value); });
+    }
+    // Now restore STATE from cloud data
+    var stateStr = localStorage.getItem('ee_app_state');
+    if (stateStr) {
+      try {
+        var cloudState = JSON.parse(stateStr);
+        STATE = Object.assign(STATE, cloudState);
+        STATE.conversationHistory = [];
+        restoreSession();
+      } catch(e) {}
+    }
+  } catch(e) { console.warn('Cloud load failed:', e.message); }
+}
+
+// ── LOCAL STORAGE FALLBACK ──
 var LS_KEY = 'execedge_ai_v5';
 
 function lsSave(data) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) {}
+  // Also save to cloud
+  saveToCloud('app_state', JSON.stringify(data));
 }
 function lsLoad() {
-  try { var d = localStorage.getItem(LS_KEY); return d ? JSON.parse(d) : null; } catch(e) { return null; }
+  // Try cloud-synced key first
+  try { var d = localStorage.getItem('ee_app_state'); if (d) return JSON.parse(d); } catch(e) {}
+  // Fall back to original key
+  try { var d2 = localStorage.getItem(LS_KEY); return d2 ? JSON.parse(d2) : null; } catch(e) { return null; }
 }
 function lsClear() {
-  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+  try { localStorage.removeItem(LS_KEY); localStorage.removeItem('ee_app_state'); } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════
@@ -1235,12 +1418,10 @@ var AGENTS = {
 };
 
 // ═══════════════════════════════════════════════════
-// INIT
+// SESSION RESTORE
 // ═══════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', function() {
-  loadState();
+function restoreSession() {
   if (STATE.plan) {
-    // Returning user — restore session
     document.getElementById('onboardingScreen').style.display = 'none';
     document.getElementById('agentScreen').style.display = 'flex';
     var b = document.getElementById('planBadge');
@@ -1248,18 +1429,42 @@ window.addEventListener('DOMContentLoaded', function() {
     b.textContent = STATE.plan === 'pro' ? '◆ Pro Plan' : '◇ Free Plan';
     b.className = 'plan-badge ' + STATE.plan;
     document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('locked'); });
-    // Restore plan card selection
     document.getElementById('cardFree').classList.toggle('selected', STATE.plan === 'free');
     document.getElementById('cardPro').classList.toggle('selected', STATE.plan === 'pro');
     document.getElementById('btnStart').disabled = false;
-    // Mark completed agents
     (STATE.completedAgents || []).forEach(function(id) {
       var n = document.getElementById('nav-' + id); if (n) n.classList.add('complete');
     });
-    var agent = STATE.currentAgent || '0';
-    navigateTo(agent);
+    updateUserUI();
+    navigateTo(STATE.currentAgent || '0');
   } else {
     document.getElementById('onboardingScreen').style.display = 'flex';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async function() {
+  // Load local state first so UI is responsive immediately
+  loadState();
+  var token = localStorage.getItem('sb_token');
+  var uid = localStorage.getItem('sb_uid');
+  var email = localStorage.getItem('sb_email');
+  if (token && uid) {
+    // Returning signed-in user — restore locally then sync cloud
+    currentUser = { id: uid, email: email, token: token };
+    restoreSession();
+    // Load cloud data in background and refresh if newer
+    await loadCloudData();
+  } else {
+    // New or signed-out user — restore local state, then prompt auth
+    if (STATE.plan) {
+      restoreSession();
+    } else {
+      document.getElementById('onboardingScreen').style.display = 'flex';
+    }
+    setTimeout(function() { showAuthModal(); }, 900);
   }
 });
 
