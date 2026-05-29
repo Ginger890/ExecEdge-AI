@@ -454,6 +454,7 @@ async function authSignIn() {
   var password = document.getElementById('auth-password').value;
   var errEl = document.getElementById('auth-error');
   errEl.style.display = 'none';
+  if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
   try {
     var r = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
       method: 'POST',
@@ -461,13 +462,16 @@ async function authSignIn() {
       body: JSON.stringify({ email: email, password: password })
     });
     var d = await r.json();
-    if (d.error || d.error_description) throw new Error(d.error_description || d.error);
-    var user = d.user || d;
-    if (!user || !user.id) throw new Error('Unable to retrieve user information. Please try again.');
-    currentUser = { id: user.id, email: user.email, token: d.access_token };
+    if (d.error_description) throw new Error(d.error_description);
+    if (d.error) throw new Error(d.error);
+    if (!d.access_token) throw new Error('No access token returned. Please check your email and password.');
+    var uid = d.user ? d.user.id : (d.id || null);
+    var uemail = d.user ? d.user.email : (d.email || email);
+    if (!uid) throw new Error('Could not retrieve user ID. Please try again.');
+    currentUser = { id: uid, email: uemail, token: d.access_token };
     localStorage.setItem('sb_token', d.access_token);
-    localStorage.setItem('sb_uid', user.id);
-    localStorage.setItem('sb_email', user.email);
+    localStorage.setItem('sb_uid', uid);
+    localStorage.setItem('sb_email', uemail);
     document.getElementById('auth-modal').remove();
     updateUserUI();
     await loadCloudData();
@@ -482,6 +486,7 @@ async function authSignUp() {
   var password = document.getElementById('auth-password').value;
   var errEl = document.getElementById('auth-error');
   errEl.style.display = 'none';
+  if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display = 'block'; return; }
   if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
   try {
     var r = await fetch(SB_URL + '/auth/v1/signup', {
@@ -490,13 +495,15 @@ async function authSignUp() {
       body: JSON.stringify({ email: email, password: password })
     });
     var d = await r.json();
-    if (d.error || d.error_description) throw new Error(d.error_description || d.error);
-    var user = d.user || d;
-    if (d.access_token && user && user.id) {
-      currentUser = { id: user.id, email: user.email, token: d.access_token };
+    if (d.error_description) throw new Error(d.error_description);
+    if (d.error) throw new Error(d.error);
+    var uid = d.user ? d.user.id : (d.id || null);
+    var uemail = d.user ? d.user.email : (d.email || email);
+    if (d.access_token && uid) {
+      currentUser = { id: uid, email: uemail, token: d.access_token };
       localStorage.setItem('sb_token', d.access_token);
-      localStorage.setItem('sb_uid', user.id);
-      localStorage.setItem('sb_email', user.email);
+      localStorage.setItem('sb_uid', uid);
+      localStorage.setItem('sb_email', uemail);
       document.getElementById('auth-modal').remove();
       updateUserUI();
     } else {
@@ -1451,17 +1458,4 @@ function restoreSession() {
 window.addEventListener('DOMContentLoaded', async function() {
   // Load local state first so UI is responsive immediately
   loadState();
-  var token = localStorage.getItem('sb_token');
-  var uid = localStorage.getItem('sb_uid');
-  var email = localStorage.getItem('sb_email');
-  if (token && uid) {
-    // Returning signed-in user — restore locally then sync cloud
-    currentUser = { id: uid, email: email, token: token };
-    restoreSession();
-    // Load cloud data in background and refresh if newer
-    await loadCloudData();
-  } else {
-    // New or signed-out user — restore local state, then prompt auth
-    if (STATE.plan) {
-      restoreSession();
-    } el
+  var token = localStorage.getIt
