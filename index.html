@@ -1458,4 +1458,26 @@ function restoreSession() {
 window.addEventListener('DOMContentLoaded', async function() {
   // Load local state first so UI is responsive immediately
   loadState();
-  var token = localStorage.getIt
+  var token = localStorage.getItem('sb_token');
+  var uid = localStorage.getItem('sb_uid');
+  var email = localStorage.getItem('sb_email');
+  if (token && uid) {
+    // Returning signed-in user — restore locally then sync cloud
+    currentUser = { id: uid, email: email, token: token };
+    restoreSession();
+    // Load cloud data in background and refresh if newer
+    await loadCloudData();
+  } else {
+    // New or signed-out user — restore local state, then prompt auth
+    if (STATE.plan) {
+      restoreSession();
+    } else {
+      document.getElementById('onboardingScreen').style.display = 'flex';
+    }
+    setTimeout(function() { showAuthModal(); }, 900);
+  }
+});
+
+</script>
+</body>
+</html>
