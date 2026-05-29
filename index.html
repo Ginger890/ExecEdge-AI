@@ -462,10 +462,12 @@ async function authSignIn() {
     });
     var d = await r.json();
     if (d.error || d.error_description) throw new Error(d.error_description || d.error);
-    currentUser = { id: d.user.id, email: d.user.email, token: d.access_token };
+    var user = d.user || d;
+    if (!user || !user.id) throw new Error('Unable to retrieve user information. Please try again.');
+    currentUser = { id: user.id, email: user.email, token: d.access_token };
     localStorage.setItem('sb_token', d.access_token);
-    localStorage.setItem('sb_uid', d.user.id);
-    localStorage.setItem('sb_email', d.user.email);
+    localStorage.setItem('sb_uid', user.id);
+    localStorage.setItem('sb_email', user.email);
     document.getElementById('auth-modal').remove();
     updateUserUI();
     await loadCloudData();
@@ -489,15 +491,16 @@ async function authSignUp() {
     });
     var d = await r.json();
     if (d.error || d.error_description) throw new Error(d.error_description || d.error);
-    if (d.access_token) {
-      currentUser = { id: d.user.id, email: d.user.email, token: d.access_token };
+    var user = d.user || d;
+    if (d.access_token && user && user.id) {
+      currentUser = { id: user.id, email: user.email, token: d.access_token };
       localStorage.setItem('sb_token', d.access_token);
-      localStorage.setItem('sb_uid', d.user.id);
-      localStorage.setItem('sb_email', d.user.email);
+      localStorage.setItem('sb_uid', user.id);
+      localStorage.setItem('sb_email', user.email);
       document.getElementById('auth-modal').remove();
       updateUserUI();
     } else {
-      errEl.textContent = 'Account created. Check your email to confirm, then sign in.';
+      errEl.textContent = 'Account created! Check your email to confirm your address, then sign in.';
       errEl.style.display = 'block';
       errEl.style.color = '#6EE7B7';
     }
@@ -1461,13 +1464,4 @@ window.addEventListener('DOMContentLoaded', async function() {
     // New or signed-out user — restore local state, then prompt auth
     if (STATE.plan) {
       restoreSession();
-    } else {
-      document.getElementById('onboardingScreen').style.display = 'flex';
-    }
-    setTimeout(function() { showAuthModal(); }, 900);
-  }
-});
-
-</script>
-</body>
-</html>
+    } el
