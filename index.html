@@ -507,9 +507,31 @@ async function authSignUp() {
       document.getElementById('auth-modal').remove();
       updateUserUI();
     } else {
-      errEl.textContent = 'Account created! Check your email to confirm your address, then sign in.';
-      errEl.style.display = 'block';
-      errEl.style.color = '#6EE7B7';
+      // Email confirmation required — sign them in automatically by trying password grant
+      try {
+        var r2 = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
+          body: JSON.stringify({ email: email, password: password })
+        });
+        var d2 = await r2.json();
+        var uid2 = d2.user ? d2.user.id : (d2.id || null);
+        var uemail2 = d2.user ? d2.user.email : (d2.email || email);
+        if (d2.access_token && uid2) {
+          currentUser = { id: uid2, email: uemail2, token: d2.access_token };
+          localStorage.setItem('sb_token', d2.access_token);
+          localStorage.setItem('sb_uid', uid2);
+          localStorage.setItem('sb_email', uemail2);
+          document.getElementById('auth-modal').remove();
+          updateUserUI();
+        } else {
+          // Fall back gracefully — close modal and continue without cloud sync
+          document.getElementById('auth-modal').remove();
+          errEl.textContent = '';
+        }
+      } catch(e2) {
+        document.getElementById('auth-modal').remove();
+      }
     }
   } catch(e) {
     errEl.textContent = 'Sign up failed: ' + e.message;
@@ -738,9 +760,9 @@ function renderAgent0() {
 
   var tools = [
     {id:'onet', name:'O*NET OnLine', url:'onetonline.org', link:'https://www.onetonline.org',
-      steps:['Go to <a href=\"https://www.onetonline.org\" target=\"_blank\">onetonline.org</a>. Log in to your CPI Momentum account. Navigate to the tile that says <strong>Assessments &amp; Career Decisions</strong>.','Click on the word <strong>Self Assessment</strong>.','Navigate down the page and click on <strong>O*NET</strong>.','Under <strong>Occupational Keyword Search</strong>, type in what you are looking for and click the search icon (e.g., Chief Operating Officer, VP of Operations).','Click the closest matching occupation from the results.','Review the <strong>Tasks, Skills, Knowledge, Abilities</strong> sections. Note any skills you have not yet documented.','Scroll to <strong>Wages &amp; Employment Trends</strong> and record the median annual wage for your region.','Check <strong>Related Occupations</strong> for adjacent titles worth targeting.','Copy the full skills and wage data and paste below.']},
+      steps:['Type <a href=\"https://www.onetonline.org\" target=\"_blank\">www.onetonline.org</a> into your browser and open it.','Under <strong>Occupational Keyword Search</strong>, type in what you are looking for and click the search icon (e.g., Chief Operating Officer, VP of Operations).','Click the closest matching occupation from the results.','Review the <strong>Tasks, Skills, Knowledge, Abilities</strong> sections. Note any skills you have not yet documented.','Scroll to <strong>Wages &amp; Employment Trends</strong> and record the median annual wage for your region.','Check <strong>Related Occupations</strong> for adjacent titles worth targeting.','Copy the full skills and wage data and paste below.']},
     {id:'cos', name:'CareerOneStop', url:'careeronestop.org', link:'https://www.careeronestop.org',
-      steps:['Log in to your CPI Momentum account. Navigate to the tile that says <strong>Assessments &amp; Career Decisions</strong>.','Click on the word <strong>Self Assessment</strong>.','Navigate down the page and click on <strong>CareerOneStop</strong>.','Click the words <strong>Explore career options</strong> in the first box on the left.','Search your target job title and select the closest matching occupation.','Select your state from the dropdown.','Record the <strong>salary range</strong> (entry, median, experienced).','Note the <strong>projected job growth rate</strong> and current number of jobs in your region.','Check the <strong>Skills tab</strong> for any competencies new to you.','Copy salary data and skills findings and paste below.']},
+      steps:['Type <a href=\"https://www.careeronestop.org\" target=\"_blank\">www.careeronestop.org</a> into your browser and open it.','Click the words <strong>Explore career options</strong> in the first box on the left.','Search your target job title and select the closest matching occupation.','Select your state from the dropdown.','Record the <strong>salary range</strong> (entry, median, experienced).','Note the <strong>projected job growth rate</strong> and current number of jobs in your region.','Check the <strong>Skills tab</strong> for any competencies new to you.','Copy salary data and skills findings and paste below.']},
     {id:'tx', name:'Texas Career Check', url:'texascareercheck.com', link:'https://texascareercheck.com',
       steps:['Go to <a href=\"https://texascareercheck.com\" target=\"_blank\">texascareercheck.com</a>.','Click <strong>Explore Careers</strong> in the navigation bar.','Use the <strong>search box in the top right</strong> of the page to search your target job title.','Click the closest matching occupation from the results.','Record <strong>Texas Wages</strong> at the 25th, median, and 75th percentile.','Note whether <strong>Texas Outlook</strong> projects growth, decline, or stability.','Check <strong>Related Occupations</strong> and <strong>Skills Profile</strong> for anything not yet in your inventory.','Copy Texas-specific wage and demand data and paste below.']}
   ];
@@ -1422,7 +1444,7 @@ var AGENTS = {
   prompt:function(i){return 'Act as my ExecEdge AI™ Intelligence Core.\n\nCurrent pipeline:\n'+i.pipeline+'\n\nWhat happened this week:\n'+i.weeklyactivity+'\n\nTarget role and industries: '+i.targetrole+'\n\nMy current concern: '+i.primaryconcern+'\n\nTell me:\n1. What is the health of my search, honestly? Rate it and tell me why.\n2. What is stalled and what specifically is causing the stall — be direct.\n3. What should I do this week, in exact priority order? Give me a daily action plan for Monday through Friday.\n4. Which companies deserve deeper attention this week and why?\n5. What messaging or positioning is working and what should I change — with specific language suggestions.\n6. What am I not doing that I should be doing? Name it directly.\n7. Any pattern in my pipeline I might be missing.';}},
 
 '4b':{title:'Onboarding Intelligence',subtitle:'Enter your new role with a plan that creates immediate visible impact.',number:'Agent 4 — Onboarding',carries:['Career Capital Summary (from Agent 0)','Interview Intelligence Brief (from Agent 3)'],next:null,saveLabel:'Onboarding Intelligence plan saved. Review it every Sunday for the first 90 days.',
-  checklist:['30-60-90 day plan built before start date — reviewed and committed to','Stakeholder map complete — relationship plan for each key person','Three failure modes identified and avoidance strategies in place','Quick wins selected — first initiative identified and resourced','6-month and 12-month success metrics agreed with CEO or board before day 30','Plan reviewed with your CPI consultant'],
+  checklist:['30-60-90 day plan built before start date — reviewed and committed to','Stakeholder map complete — relationship plan for each key person','Three failure modes identified and avoidance strategies in place','Quick wins selected — first initiative identified and resourced','6-month and 12-month success metrics agreed with CEO or board before day 30','Plan reviewed with your consultant'],
   inputs:[{id:'newrole',label:'New Role & Start Date',hint:'Title, company, start date.',rows:1,required:true},{id:'searchintel',label:'Everything Learned During Your Search',hint:'Paste your interview intelligence brief, interview notes, and research.',rows:8,required:true},{id:'mandate',label:'Business Problems You Were Hired to Solve',hint:'What they told you — explicitly or implicitly — about why this role exists now.',rows:3,required:true},{id:'leadership',label:'The Leadership Team',hint:'Names, titles, your read on each person from the interview process.',rows:4,required:true},{id:'politics',label:'Political Dynamics You Are Aware Of',hint:'Who has influence? Where are the fault lines? What were the undercurrents?',rows:4,required:true},{id:'primaryfear',label:'Your Primary Concern About Succeeding',hint:'Be direct. What keeps you up at night about this role?',rows:2,required:true}],
   prompt:function(i){return 'Act as my Onboarding Intelligence Agent.\n\nI have accepted the role of '+i.newrole+'.\n\nEverything I learned during my search and interviews:\n'+i.searchintel+'\n\nBusiness problems I was hired to solve: '+i.mandate+'\n\nThe leadership team: '+i.leadership+'\n\nPolitical dynamics: '+i.politics+'\n\nMy primary concern: '+i.primaryfear+'\n\nProduce:\n1. A real-situation 30-60-90 day plan specific to this company. Each phase: specific actions, relationships to build, risks to manage, outcomes to achieve.\n2. Stakeholder map: for each key person — what they care about, what they worry about, how to approach building the relationship in the first 30 days.\n3. The three most likely failure modes in my first 90 days and how to avoid each.\n4. The two or three quick wins most likely to establish credibility in the first 60 days.\n5. What success looks like at 6 months and 12 months in specific, measurable terms I could present as commitments.';}}
 };
