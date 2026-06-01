@@ -545,16 +545,19 @@ function skipAuth() {
 
 function updateUserUI() {
   var badge = document.getElementById('planBadgeWrap') || document.querySelector('.plan-badge-wrap');
-  if (badge && currentUser) {
-    var existing = document.getElementById('user-row');
-    if (existing) existing.remove();
-    var userRow = document.createElement('div');
-    userRow.id = 'user-row';
-    userRow.style.cssText = 'font-family:\'DM Sans\',sans-serif;font-size:10px;color:#8A6E26;margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:6px';
+  if (!badge) return;
+  var existing = document.getElementById('user-row');
+  if (existing) existing.remove();
+  var userRow = document.createElement('div');
+  userRow.id = 'user-row';
+  userRow.style.cssText = 'font-family:\'DM Sans\',sans-serif;font-size:10px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:6px';
+  if (currentUser) {
     userRow.innerHTML = '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;color:rgba(232,210,138,0.6)">' + currentUser.email + '</span>'
       + '<button onclick="signOut()" style="background:transparent;border:none;color:#7A8694;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;padding:0;white-space:nowrap">Sign out</button>';
-    badge.appendChild(userRow);
+  } else {
+    userRow.innerHTML = '<button onclick="showAuthModal()" style="background:transparent;border:1px solid rgba(184,151,58,0.35);border-radius:3px;color:#B8973A;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:4px 10px;white-space:nowrap">Sign In</button>';
   }
+  badge.appendChild(userRow);
 }
 
 async function signOut() {
@@ -1491,12 +1494,13 @@ window.addEventListener('DOMContentLoaded', async function() {
     // Load cloud data in background and refresh if newer
     await loadCloudData();
   } else {
-    // New or signed-out user — restore local state, then prompt auth
+    // New or signed-out user — restore local state, show auth modal, then show sign-in button
     if (STATE.plan) {
       restoreSession();
     } else {
       document.getElementById('onboardingScreen').style.display = 'flex';
     }
+    updateUserUI();
     showAuthModal();
   }
 });
@@ -1509,4 +1513,6 @@ window.addEventListener('DOMContentLoaded', async function() {
   </div>
   <div style="position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:1px solid rgba(184,151,58,0.2);padding:6px 24px;display:flex;align-items:center;justify-content:center;z-index:100">
     <span style="font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(184,151,58,0.5);letter-spacing:0.08em">ExecEdge AI™ &nbsp;·&nbsp; Conceived, designed, and developed by Mary Newell Pape &nbsp;·&nbsp; © 2026 Mary Newell Pape. All rights reserved.</span>
-  </d
+  </div>
+</body>
+</html>
