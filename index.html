@@ -368,6 +368,10 @@ textarea{min-height:90px}
       </div>
       <button class="btn-start" id="btnStart" onclick="startApp()" disabled>Begin Your Search</button>
       <p style="font-size:11px;color:var(--text-muted);margin-top:16px;max-width:380px;line-height:1.6">You can switch plans at any time. Your progress is saved automatically in this browser.</p>
+      <div id="onboarding-user-row" style="margin-top:16px;display:none;align-items:center;gap:10px">
+        <span id="onboarding-email" style="font-size:11px;color:var(--text-muted)"></span>
+        <button onclick="signOut()" style="background:transparent;border:1px solid var(--border-strong);color:var(--text-muted);padding:4px 12px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">Sign Out</button>
+      </div>
     </div>
 
     <!-- AGENT SCREEN -->
@@ -1453,6 +1457,13 @@ var AGENTS = {
 // SESSION RESTORE
 // ═══════════════════════════════════════════════════
 function restoreSession() {
+  // Always show user info on onboarding screen if signed in
+  if (currentUser) {
+    var row = document.getElementById('onboarding-user-row');
+    var emailEl = document.getElementById('onboarding-email');
+    if (row) { row.style.display = 'flex'; }
+    if (emailEl) { emailEl.textContent = 'Signed in as ' + currentUser.email; }
+  }
   if (STATE.plan) {
     document.getElementById('onboardingScreen').style.display = 'none';
     document.getElementById('agentScreen').style.display = 'flex';
