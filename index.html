@@ -316,6 +316,10 @@ textarea{min-height:90px}
     </div>
     <div class="plan-badge-wrap">
       <div id="planBadge" class="plan-badge" style="display:none" onclick="showOnboarding()"></div>
+      <div id="sidebar-user-row" style="display:none;align-items:center;justify-content:space-between;margin-top:8px;gap:6px">
+        <span id="sidebar-email" style="font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(232,210,138,0.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px"></span>
+        <button onclick="signOut()" style="background:transparent;border:none;color:#7A8694;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;padding:0;white-space:nowrap;flex-shrink:0">Sign Out</button>
+      </div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Foundation</div>
@@ -368,10 +372,7 @@ textarea{min-height:90px}
       </div>
       <button class="btn-start" id="btnStart" onclick="startApp()" disabled>Begin Your Search</button>
       <p style="font-size:11px;color:var(--text-muted);margin-top:16px;max-width:380px;line-height:1.6">You can switch plans at any time. Your progress is saved automatically in this browser.</p>
-      <div id="onboarding-user-row" style="margin-top:16px;display:none;align-items:center;gap:10px">
-        <span id="onboarding-email" style="font-size:11px;color:var(--text-muted)"></span>
-        <button onclick="signOut()" style="background:transparent;border:1px solid var(--border-strong);color:var(--text-muted);padding:4px 12px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">Sign Out</button>
-      </div>
+
     </div>
 
     <!-- AGENT SCREEN -->
@@ -548,16 +549,11 @@ function skipAuth() {
 }
 
 function updateUserUI() {
-  var badge = document.getElementById('planBadgeWrap') || document.querySelector('.plan-badge-wrap');
-  if (badge && currentUser) {
-    var existing = document.getElementById('user-row');
-    if (existing) existing.remove();
-    var userRow = document.createElement('div');
-    userRow.id = 'user-row';
-    userRow.style.cssText = 'font-family:\'DM Sans\',sans-serif;font-size:10px;color:#8A6E26;margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:6px';
-    userRow.innerHTML = '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;color:rgba(232,210,138,0.6)">' + currentUser.email + '</span>'
-      + '<button onclick="signOut()" style="background:transparent;border:none;color:#7A8694;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;padding:0;white-space:nowrap">Sign out</button>';
-    badge.appendChild(userRow);
+  if (currentUser) {
+    var row = document.getElementById('sidebar-user-row');
+    var emailEl = document.getElementById('sidebar-email');
+    if (row) row.style.display = 'flex';
+    if (emailEl) emailEl.textContent = currentUser.email;
   }
 }
 
@@ -1457,13 +1453,8 @@ var AGENTS = {
 // SESSION RESTORE
 // ═══════════════════════════════════════════════════
 function restoreSession() {
-  // Always show user info on onboarding screen if signed in
-  if (currentUser) {
-    var row = document.getElementById('onboarding-user-row');
-    var emailEl = document.getElementById('onboarding-email');
-    if (row) { row.style.display = 'flex'; }
-    if (emailEl) { emailEl.textContent = 'Signed in as ' + currentUser.email; }
-  }
+  // Always show user info in sidebar if signed in
+  if (currentUser) { updateUserUI(); }
   if (STATE.plan) {
     document.getElementById('onboardingScreen').style.display = 'none';
     document.getElementById('agentScreen').style.display = 'flex';
