@@ -371,7 +371,7 @@ function toggleSidebar() {
 }
 
 // ── CLAUDE API KEY ──
-var CLAUDE_API_KEY = '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';
+var CLAUDE_API_KEY = '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';
 
 // ── SUPABASE CONFIG ──
 var SB_URL = 'https://qrvxkqxzzjtesafndhgv.supabase.co';
@@ -432,6 +432,7 @@ async function authSignIn() {
     document.getElementById('auth-modal').remove();
     updateUserUI();
     await loadCloudData();
+    setTimeout(checkAndOfferMigration, 1500);
   } catch(e) { errEl.textContent = 'Sign in failed: '+e.message; errEl.style.display = 'block'; console.error('Auth:',e); }
 }
 
@@ -457,6 +458,7 @@ async function authSignUp() {
       document.getElementById('auth-modal').remove();
       updateUserUI();
       await loadCloudData();
+      setTimeout(checkAndOfferMigration, 1500);
     } else {
       try {
         var r2 = await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({email:email,password:password})});
@@ -1293,6 +1295,118 @@ function restoreSession() {
   }
 }
 
+
+// ── LOCAL DATA MIGRATION ──
+async function checkAndOfferMigration() {
+  if (!currentUser) return;
+  
+  // Check for local ExecEdge state with actual content
+  var localState = null;
+  try {
+    var raw = localStorage.getItem('execedge_ai_v5') || localStorage.getItem('ee_app_state');
+    if (raw) localState = JSON.parse(raw);
+  } catch(e) {}
+  
+  if (!localState) return;
+  
+  var hasOutputs = localState.savedOutputs && Object.keys(localState.savedOutputs).length > 0;
+  var hasInputs = localState.savedInputs && Object.keys(localState.savedInputs).length > 0;
+  var hasAssessment = !!localState.assessmentResult;
+  
+  if (!hasOutputs && !hasInputs && !hasAssessment) return;
+  if (localStorage.getItem('ee_synced') === currentUser.id) return;
+  
+  // Show migration banner
+  var existing = document.getElementById('migration-banner');
+  if (existing) return;
+  
+  var itemCount = (hasOutputs ? Object.keys(localState.savedOutputs).length : 0) 
+                + (hasAssessment ? 1 : 0);
+  
+  var banner = document.createElement('div');
+  banner.id = 'migration-banner';
+  banner.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:#1C2E45;border:1px solid rgba(184,151,58,0.6);border-radius:6px;padding:1rem 1.5rem;z-index:500;max-width:460px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,0.4);display:flex;align-items:flex-start;gap:1rem;';
+  banner.innerHTML = '<div style="color:#B8973A;font-size:1.1rem;flex-shrink:0;margin-top:2px">&#9670;</div>'
+    + '<div style="flex:1">'
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:1rem;color:#E8D28A;font-weight:600;margin-bottom:4px">Saved work found on this device</div>'
+    + '<div style="font-size:0.78rem;color:#7A8694;line-height:1.5;margin-bottom:10px">You have ' + (itemCount > 0 ? itemCount + ' saved outputs and ' : '') + 'inputs from before you created your account. Upload them now so your work is available on any device.</div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    + '<button onclick="runMigration()" id="migrate-btn" style="background:#B8973A;border:none;border-radius:4px;color:#0E1A2B;cursor:pointer;font-family:DM Sans,sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;padding:0.5rem 1rem;text-transform:uppercase">Upload to My Account</button>'
+    + '<button onclick="dismissMigration()" style="background:transparent;border:1px solid rgba(184,151,58,0.3);border-radius:4px;color:#7A8694;cursor:pointer;font-family:DM Sans,sans-serif;font-size:0.7rem;letter-spacing:0.08em;padding:0.5rem 1rem;text-transform:uppercase">Not Now</button>'
+    + '</div></div>';
+  document.body.appendChild(banner);
+}
+
+async function runMigration() {
+  var btn = document.getElementById('migrate-btn');
+  if (btn) { btn.textContent = 'Uploading...'; btn.disabled = true; }
+  
+  try {
+    var token = localStorage.getItem('sb_token');
+    
+    // Get the full local state
+    var raw = localStorage.getItem('execedge_ai_v5') || localStorage.getItem('ee_app_state');
+    if (raw) {
+      await fetch(SB_URL + '/rest/v1/execedge_data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + token,
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          data_key: 'app_state',
+          data_value: raw,
+          updated_at: new Date().toISOString()
+        })
+      });
+    }
+    
+    // Also migrate assessment result if present
+    if (STATE.assessmentResult) {
+      await fetch(SB_URL + '/rest/v1/execedge_data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + token,
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          data_key: 'assessment_result',
+          data_value: STATE.assessmentResult,
+          updated_at: new Date().toISOString()
+        })
+      });
+    }
+    
+    localStorage.setItem('ee_synced', currentUser.id);
+    
+    var banner = document.getElementById('migration-banner');
+    if (banner) {
+      banner.innerHTML = '<div style="color:#2D6A4F;font-size:1.1rem;flex-shrink:0">&#10003;</div>'
+        + '<div><div style="font-family:Cormorant Garamond,serif;font-size:1rem;color:#E8D28A;font-weight:600;margin-bottom:4px">Upload complete</div>'
+        + '<div style="font-size:0.78rem;color:#7A8694;line-height:1.5">Your work has been saved to your account and is now available on any device.</div></div>';
+      setTimeout(function() { 
+        var b = document.getElementById('migration-banner'); 
+        if (b) b.remove(); 
+      }, 4000);
+    }
+  } catch(e) {
+    var btn2 = document.getElementById('migrate-btn');
+    if (btn2) { btn2.textContent = 'Upload Failed — Try Again'; btn2.disabled = false; }
+    console.error('Migration error:', e);
+  }
+}
+
+function dismissMigration() {
+  var banner = document.getElementById('migration-banner');
+  if (banner) banner.remove();
+}
+
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', async function() {
   loadState();
@@ -1309,6 +1423,7 @@ window.addEventListener('DOMContentLoaded', async function() {
         currentUser = {id:uid, email:vd.email||email, token:token};
         restoreSession();
         await loadCloudData();
+        setTimeout(checkAndOfferMigration, 1500);
       } else {
         localStorage.removeItem('sb_token'); localStorage.removeItem('sb_uid'); localStorage.removeItem('sb_email');
         if (STATE.plan) { restoreSession(); } else { document.getElementById('onboardingScreen').style.display = 'flex'; }
