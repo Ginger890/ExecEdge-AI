@@ -711,11 +711,121 @@ function renderAgent0C() {
   return html;
 }
 
+
+function renderAgent3A() {
+  var savedOut = STATE.savedOutputs['3a']||'';
+  var html = '<div class="context-panel"><span class="context-icon">◆</span><div class="context-text"><strong>Agent 3A — Interview Intelligence.</strong> Complete Steps 1 and 2 to generate your full intelligence brief. Then use the Live Mock Interview to practice with camera, recording, and AI debrief.</div></div>';
+
+  // Carry forward
+  html += '<div class="carry-forward-box"><div class="carry-title">Bring These With You</div><div class="carry-item"><span style="color:var(--gold);flex-shrink:0">▸</span><span>Paste your <strong>Career Capital Summary (from Agent 0)</strong> into the field below</span></div></div>';
+
+  // Step 1 - Intelligence Brief inputs
+  html += '<div class="gateway-section"><div class="gateway-header"><span class="gateway-step-badge">Step 1</span><span class="gateway-header-text">Generate Your Interview Intelligence Brief</span></div><div class="gateway-body">';
+
+  var inputs3a = [
+    {id:'company',label:'Company Name',hint:'The organization you are interviewing with.',rows:1,required:true},
+    {id:'jd',label:'Job Description',hint:'Paste the full job description.',rows:6,required:true},
+    {id:'ccs',label:'Career Capital Summary',hint:'Paste your Career Capital Summary from Agent 0.',rows:6,required:true},
+    {id:'interviewers',label:'Interviewers',hint:'Name and title for each person.',rows:4,required:true},
+    {id:'compresearch',label:'Your Research Notes (Optional)',hint:'What you already know about the company.',rows:5,required:false},
+    {id:'format',label:'Interview Format',hint:'e.g., 4 interviews — CEO, COO, CFO, board member.',rows:2,required:true}
+  ];
+
+  inputs3a.forEach(function(inp){
+    var saved = (STATE.savedInputs||{})['3a_'+inp.id]||'';
+    html += '<div class="input-section"><div class="input-label">'+inp.label+(inp.required?' <span class="input-required">Required</span>':'')+'</div><div class="input-hint">'+inp.hint+'</div><textarea id="inp_3a_'+inp.id+'" rows="'+inp.rows+'" data-agent="3a" data-field="'+inp.id+'" onchange="a3aAutoSave(this)" onblur="a3aAutoSave(this)">'+escHtml(saved)+'</textarea></div>';
+  });
+
+  html += '<button class="btn-generate" id="btnGen_3a" onclick=\'generate3ABrief()\'><span>Generate Interview Intelligence Brief</span></button>';
+  html += '<div class="divider-gold"></div>';
+  html += '<div class="output-section"><div class="output-header"><div class="output-label">Interview Intelligence Brief</div><div class="output-actions"><button class="btn-action" onclick=\'copyOutput(\x273a\x27)\'>⎘ Copy</button><button class="btn-action" onclick=\'dlOutput(\x273a\x27,\x27Agent_3A_Interview_Intelligence\x27)\'>↓ Download</button></div></div>';
+  html += '<div class="output-box" id="output_3a">'+(savedOut?'<span>'+escHtml(savedOut)+'</span>':'<span class="output-placeholder">Complete the fields above and click Generate.</span>')+'</div></div>';
+  html += '</div></div>';
+
+  // Step 2 - Live Mock Interview
+  html += '<div class="gateway-section" id="mock-interview-section"><div class="gateway-header"><span class="gateway-step-badge">Step 2</span><span class="gateway-header-text">Live Mock Interview — Camera · Recording · AI Debrief</span></div><div class="gateway-body">';
+  html += '<div class="gateway-desc">Practice your interview with your camera on. Your answers are transcribed in real time. When you finish, you receive a single AI debrief covering content, delivery, and body language.</div>';
+
+  // Camera setup panel
+  html += '<div id="mock-setup" style="text-align:center;padding:20px 0">';
+  html += '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600;color:var(--navy);margin-bottom:8px">Ready to Practice?</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;line-height:1.6">Make sure your camera and microphone are connected. The interview will use the questions from your Intelligence Brief above, or you can enter custom questions below.</div>';
+  html += '<div class="input-section"><div class="input-label">Custom Interview Questions (Optional)</div><div class="input-hint">Paste specific questions you want to practice. Leave blank to use questions from your Intelligence Brief above.</div><textarea id="mock-custom-questions" rows="5" placeholder="e.g.&#10;Tell me about a time you led a major transformation.&#10;What is your leadership style?&#10;Where do you see yourself in 5 years?"></textarea></div>';
+  html += '<button class="btn-generate gold" onclick="startMockInterview()" id="mock-start-btn"><span>▶ Start Mock Interview</span></button>';
+  html += '</div>';
+
+  // Camera + interview panel (hidden until started)
+  html += '<div id="mock-active" style="display:none">';
+
+  // Camera feed
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="mock-grid">';
+  html += '<div>';
+  html += '<div style="font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--navy);margin-bottom:6px">Live Feed</div>';
+  html += '<div style="position:relative;background:#0E1A2B;border-radius:6px;overflow:hidden;aspect-ratio:16/9">';
+  html += '<video id="mock-video" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover"></video>';
+  html += '<div id="mock-rec-indicator" style="display:none;position:absolute;top:8px;right:8px;background:rgba(193,68,14,0.9);color:white;font-size:10px;font-weight:700;letter-spacing:.1em;padding:3px 8px;border-radius:3px;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;background:#ff4444;border-radius:50%;animation:blink .8s infinite"></span>REC</div>';
+  html += '</div></div>';
+
+  // Question panel
+  html += '<div>';
+  html += '<div style="font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--navy);margin-bottom:6px">Current Question</div>';
+  html += '<div style="background:var(--navy);border-radius:6px;padding:20px;min-height:120px;display:flex;flex-direction:column;justify-content:space-between">';
+  html += '<div id="mock-question-num" style="font-size:10px;color:rgba(232,210,138,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Question 1 of 5</div>';
+  html += '<div id="mock-question-text" style="font-family:Cormorant Garamond,serif;font-size:18px;color:var(--gold-light);line-height:1.5;font-weight:500">Loading questions...</div>';
+  html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
+  html += '<button class="btn-action" onclick="mockNextQuestion()" id="mock-next-btn" style="background:var(--gold);color:var(--navy);border-color:var(--gold)">Next Question →</button>';
+  html += '<button class="btn-action" onclick="endMockInterview()" style="border-color:rgba(193,68,14,0.5);color:var(--danger)">■ End Interview</button>';
+  html += '</div></div></div>';
+  html += '</div>'; // end grid
+
+  // Transcription live display
+  html += '<div style="margin-bottom:16px">';
+  html += '<div style="font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:8px">Live Transcription <span id="mock-transcript-indicator" style="width:7px;height:7px;background:#ccc;border-radius:50%;display:inline-block"></span></div>';
+  html += '<div id="mock-transcript-live" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;min-height:80px;font-size:13px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;font-style:italic">Your transcribed answers will appear here as you speak...</div>';
+  html += '</div>';
+
+  html += '</div>'; // end mock-active
+
+  // Results panel (hidden until interview ends)
+  html += '<div id="mock-results" style="display:none">';
+  html += '<div style="background:var(--success-light);border:1px solid rgba(45,106,79,.25);border-radius:6px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><div style="color:var(--success);font-size:18px">✓</div><div><div style="font-size:12px;font-weight:500;color:var(--success);margin-bottom:2px">Interview Complete</div><div style="font-size:11px;color:var(--text-muted)">Your recording and transcript are ready. Generate your AI debrief below.</div></div></div>';
+
+  // Playback
+  html += '<div style="margin-bottom:16px"><div style="font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--navy);margin-bottom:6px">Playback</div>';
+  html += '<video id="mock-playback" controls style="width:100%;border-radius:6px;background:#0E1A2B;max-height:300px"></video></div>';
+
+  // Full transcript
+  html += '<div style="margin-bottom:16px"><div style="font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--navy);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">Full Transcript <button class="btn-action" onclick="copyMockTranscript()">⎘ Copy</button></div>';
+  html += '<div id="mock-transcript-full" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;font-size:13px;color:var(--text-primary);line-height:1.8;white-space:pre-wrap;max-height:300px;overflow-y:auto"></div></div>';
+
+  // AI Debrief
+  html += '<div><div style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--navy);margin-bottom:8px">AI Performance Debrief</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">One comprehensive debrief covering your content, delivery, and body language — based on your transcript and captured video frames.</div>';
+  html += '<button class="btn-generate gold" id="mock-debrief-btn" onclick="generateMockDebrief()"><span>Generate AI Debrief</span></button>';
+  html += '<div id="mock-debrief-output" style="display:none;margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--navy)">Performance Debrief</div><button class="btn-action" onclick="copyMockDebrief()">⎘ Copy</button></div>';
+  html += '<div id="mock-debrief-text" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;font-size:13px;line-height:1.9;color:var(--text-primary);white-space:pre-wrap;font-family:DM Sans,sans-serif"></div>';
+  html += '</div></div>';
+
+  html += '</div>'; // end mock-results
+  html += '</div></div>'; // end gateway body/section
+
+  // Checklist
+  var cl = STATE.checklistState['3a']||{};
+  var clItems = ['Company intelligence brief reviewed','Each interviewer profiled','Coached answers for all 15 predicted questions prepared','Strategic questions selected','Objection responses internalized','Mock interview completed with camera and AI debrief reviewed'];
+  html += '<div class="checklist" id="checklist_3a"><div class="checklist-header">Completion Checklist — Gate to Agent 3B</div>';
+  clItems.forEach(function(item,idx){var ck=cl[idx]||false;html+='<div class="checklist-item" onclick=\'toggleCheck(\x273a\x27,'+idx+')"><div class="check-box'+(ck?' checked':'')+'"><span class="check-mark">✓</span></div><div class="check-text'+(ck?' checked':'')+'">'+item+'</div></div>';});
+  html += '</div><button class="btn-proceed" onclick=\'navigateTo(\x273b\x27)\'>Proceed to Agent 3B — Offer & Negotiation →</button>';
+
+  return html;
+}
+
 function renderAgentBody(id, ag) {
   var body = document.getElementById('agentBody');
   if (id === '0') { body.innerHTML = renderAgent0(); return; }
   if (id === '0b') { body.innerHTML = renderAgent0B(); return; }
   if (id === '0c') { body.innerHTML = renderAgent0C(); return; }
+  if (id === '3a') { body.innerHTML = renderAgent3A(); return; }
   var html = '';
   if (STATE.plan === 'pro') { html += '<div class="pro-context-strip"><span class="pro-pill">Pro</span><div class="pro-context-text">Context from previous agents carries forward automatically in this session.</div></div>'; }
   else if (ag.carries && ag.carries.length) {
@@ -1237,15 +1347,431 @@ function buildEmbeddedAssessment(container) {
     document.getElementById('ea-send-btn').onclick=function(){receiveAssessmentResult(pasteText,ST.scores);};
 
     // ── OPTIONAL: Personal Assessment Report ──
-    var reportSection=document.createElement('div');reportSection.className='ea-report-section';reportSection.style.marginTop='20px';
-    var savedReport=STATE.reportText||'';
-    reportSection.innerHTML='<div class="ea-report-bar"><div><div class="ea-report-bar-title">Optional: Personal Assessment Report</div><div class="ea-report-bar-sub">A plain-English breakdown of your 20 dimension scores — for your own reference</div></div><div style="display:flex;gap:8px;align-items:center"><button id="ea-report-dl-btn" class="ea-btn ea-btn-ghost" style="display:'+(savedReport?'inline-flex':'none')+';font-size:11px;padding:7px 14px" onclick="dlReport(''+name+'')">&#8595; Download</button></div></div><div style="padding:16px 20px"><p style="font-size:12px;color:#9a9690;margin-bottom:12px;line-height:1.6">This gives you a plain-English interpretation of what each score means for your executive search. It is not required — you can proceed to Agent 0 above at any time.</p><button class="ea-btn ea-btn-ghost" id="ea-gen-report-btn" onclick="generateReport(ST.scores,''+name+'',this)">Generate My Personal Assessment Report</button><p style="font-size:11px;color:#9a9690;margin-top:8px;line-height:1.5">Takes about 30 seconds.</p></div><div class="ea-report-output" id="ea-report-output" style="display:'+(savedReport?'block':'none')+'">'+escHtml(savedReport)+'</div>';
+    var reportSection = document.createElement('div');
+    reportSection.className = 'ea-report-section';
+    reportSection.style.marginTop = '20px';
+    var savedReport = STATE.reportText || '';
+    
+    var reportBar = document.createElement('div');
+    reportBar.className = 'ea-report-bar';
+    var reportBarLeft = document.createElement('div');
+    var reportBarTitle = document.createElement('div');
+    reportBarTitle.className = 'ea-report-bar-title';
+    reportBarTitle.textContent = 'Optional: Personal Assessment Report';
+    var reportBarSub = document.createElement('div');
+    reportBarSub.className = 'ea-report-bar-sub';
+    reportBarSub.textContent = 'A plain-English breakdown of your 20 dimension scores — for your own reference';
+    reportBarLeft.appendChild(reportBarTitle);
+    reportBarLeft.appendChild(reportBarSub);
+    
+    var dlBtnWrap = document.createElement('div');
+    dlBtnWrap.style.cssText = 'display:flex;gap:8px;align-items:center';
+    var dlBtn = document.createElement('button');
+    dlBtn.id = 'ea-report-dl-btn';
+    dlBtn.className = 'ea-btn ea-btn-ghost';
+    dlBtn.style.cssText = 'display:'+(savedReport?'inline-flex':'none')+';font-size:11px;padding:7px 14px';
+    dlBtn.innerHTML = '&#8595; Download';
+    dlBtn.onclick = function(){ dlReport(name); };
+    dlBtnWrap.appendChild(dlBtn);
+    reportBar.appendChild(reportBarLeft);
+    reportBar.appendChild(dlBtnWrap);
+    reportSection.appendChild(reportBar);
+    
+    var reportBody = document.createElement('div');
+    reportBody.style.cssText = 'padding:16px 20px';
+    var reportDesc = document.createElement('p');
+    reportDesc.style.cssText = 'font-size:12px;color:#9a9690;margin-bottom:12px;line-height:1.6';
+    reportDesc.textContent = 'This gives you a plain-English interpretation of what each score means for your executive search. It is not required — you can proceed to Agent 0 above at any time.';
+    var genBtn = document.createElement('button');
+    genBtn.className = 'ea-btn ea-btn-ghost';
+    genBtn.id = 'ea-gen-report-btn';
+    genBtn.textContent = 'Generate My Personal Assessment Report';
+    genBtn.onclick = function(){ generateReport(ST.scores, name, genBtn); };
+    var genNote = document.createElement('p');
+    genNote.style.cssText = 'font-size:11px;color:#9a9690;margin-top:8px;line-height:1.5';
+    genNote.textContent = 'Takes about 30 seconds.';
+    reportBody.appendChild(reportDesc);
+    reportBody.appendChild(genBtn);
+    reportBody.appendChild(genNote);
+    reportSection.appendChild(reportBody);
+    
+    var reportOutput = document.createElement('div');
+    reportOutput.className = 'ea-report-output';
+    reportOutput.id = 'ea-report-output';
+    reportOutput.style.display = savedReport ? 'block' : 'none';
+    if (savedReport) reportOutput.textContent = savedReport;
+    reportSection.appendChild(reportOutput);
+    
     document.getElementById('ea-scr-suite').appendChild(reportSection);
     container.parentElement.scrollTop=0;
   }
 }
 
-var AGENTS = {
+
+// ── AG// ── AGENT 3A HELPER ──
+function a3aAutoSave(el) {
+  var agent = el.getAttribute('data-agent');
+  var field = el.getAttribute('data-field');
+  if (agent && field) autoSaveInput(agent, field);
+}
+
+// ── MOCK INTERVIEW ENGINE ──
+var mockState = {
+  stream: null,
+  mediaRecorder: null,
+  recordedChunks: [],
+  recognition: null,
+  transcript: [],
+  currentQuestion: 0,
+  questions: [],
+  capturedFrames: [],
+  isRecording: false
+};
+
+function generate3ABrief() {
+  var btn = document.getElementById('btnGen_3a');
+  var out = document.getElementById('output_3a');
+  var inputs = {};
+  var required = ['company','jd','ccs','interviewers','format'];
+  var ok = true;
+  ['company','jd','ccs','interviewers','compresearch','format'].forEach(function(id){
+    inputs[id] = getInp('3a', id);
+    if (required.indexOf(id) > -1 && !inputs[id]) {
+      ok = false;
+      var el = document.getElementById('inp_3a_'+id);
+      if (el) el.classList.add('input-error');
+    }
+  });
+  if (!ok) { out.innerHTML = '<div class="error-box">Please complete all required fields.</div>'; return; }
+  saveState();
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div><span>Generating...</span>';
+  out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
+  var prompt = 'Act as my Company & Interview Intelligence Agent.\n\nCompany: '+inputs.company+'\nCareer Capital Summary: '+inputs.ccs+'\nInterviewers: '+inputs.interviewers+'\nResearch: '+(inputs.compresearch||'None')+'\nFormat: '+inputs.format+'\n\nJob Description:\n'+inputs.jd+'\n\nProduce:\n1. Business situation summary.\n2. Strategic priorities and why this hire matters now.\n3. For each interviewer: background, likely concerns, how to adapt.\n4. 15 predicted questions with coached answers.\n5. 8 strategic questions for me to ask.\n6. Objections I am likely to face and how to address each.\n7. Closing statement.\n\nThen produce a MOCK INTERVIEW section with exactly 7 questions labeled MOCK Q1 through MOCK Q7 — a mix of behavioral, strategic, and objection-based questions specific to this company and role.';
+  callClaudeWithMsgs('3a',[{role:'user',content:prompt}],prompt,btn,'Generate Interview Intelligence Brief','Agent_3A_Interview_Intelligence');
+}
+
+async function startMockInterview() {
+  var btn = document.getElementById('mock-start-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner dark"></div><span>Starting camera...</span>';
+
+  try {
+    // Get camera + mic stream
+    mockState.stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+    var video = document.getElementById('mock-video');
+    video.srcObject = mockState.stream;
+
+    // Set up recording
+    mockState.recordedChunks = [];
+    mockState.capturedFrames = [];
+    mockState.transcript = [];
+    mockState.currentQuestion = 0;
+
+    var mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+    mockState.mediaRecorder = new MediaRecorder(mockState.stream, {mimeType: mimeType});
+    mockState.mediaRecorder.ondataavailable = function(e) {
+      if (e.data && e.data.size > 0) mockState.recordedChunks.push(e.data);
+    };
+    mockState.mediaRecorder.start(1000);
+    mockState.isRecording = true;
+
+    // Show rec indicator
+    document.getElementById('mock-rec-indicator').style.display = 'flex';
+
+    // Set up speech recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      mockState.recognition = new SR();
+      mockState.recognition.continuous = true;
+      mockState.recognition.interimResults = true;
+      mockState.recognition.lang = 'en-US';
+
+      var currentInterim = '';
+      mockState.recognition.onresult = function(e) {
+        var interim = '', final = '';
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) { final += e.results[i][0].transcript; }
+          else { interim += e.results[i][0].transcript; }
+        }
+        if (final) {
+          mockState.transcript.push(final);
+          currentInterim = '';
+        } else { currentInterim = interim; }
+        var liveEl = document.getElementById('mock-transcript-live');
+        if (liveEl) liveEl.textContent = mockState.transcript.join(' ') + (currentInterim ? ' ' + currentInterim : '');
+        var ind = document.getElementById('mock-transcript-indicator');
+        if (ind) ind.style.background = '#2ecc71';
+      };
+      mockState.recognition.onerror = function(e) {
+        var ind = document.getElementById('mock-transcript-indicator');
+        if (ind) ind.style.background = '#e74c3c';
+      };
+      mockState.recognition.start();
+    }
+
+    // Load questions
+    loadMockQuestions();
+
+    // Show active panel
+    document.getElementById('mock-setup').style.display = 'none';
+    document.getElementById('mock-active').style.display = 'block';
+
+    // Start frame capture (every 30 seconds)
+    mockState.frameCaptureInterval = setInterval(captureFrame, 30000);
+    // Capture first frame immediately after 3 seconds
+    setTimeout(captureFrame, 3000);
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<span>▶ Start Mock Interview</span>';
+    var setup = document.getElementById('mock-setup');
+    if (setup) {
+      var errDiv = document.createElement('div');
+      errDiv.className = 'error-box';
+      errDiv.style.marginTop = '12px';
+      errDiv.textContent = 'Camera access denied or not available. Please allow camera and microphone access and try again.';
+      setup.appendChild(errDiv);
+    }
+    console.error('Camera error:', e);
+  }
+}
+
+function loadMockQuestions() {
+  // Try to extract MOCK Q questions from the saved brief
+  var brief = STATE.savedOutputs['3a'] || '';
+  var questions = [];
+
+  // Extract MOCK Q1-Q7 from brief
+  var mockMatch = brief.match(/MOCK Q\d+[:\s–-]+([^\n]+)/gi);
+  if (mockMatch && mockMatch.length > 0) {
+    questions = mockMatch.map(function(q) {
+      return q.replace(/^MOCK Q\d+[:\s–-]+/i, '').trim();
+    });
+  }
+
+  // Check custom questions
+  var custom = document.getElementById('mock-custom-questions');
+  if (custom && custom.value.trim()) {
+    var customQs = custom.value.trim().split('\n').filter(function(q){ return q.trim().length > 10; });
+    if (customQs.length > 0) questions = customQs;
+  }
+
+  // Fallback questions
+  if (questions.length === 0) {
+    questions = [
+      'Tell me about yourself and what brings you to this opportunity.',
+      'Walk me through a major transformation you led. What was the outcome?',
+      'Describe a time you had to make a difficult decision with incomplete information.',
+      'How do you build trust with a new leadership team quickly?',
+      'Where do you see the biggest opportunity in this role in the first 90 days?',
+      'Tell me about a time you had to navigate significant organizational resistance.',
+      'What questions do you have for us?'
+    ];
+  }
+
+  mockState.questions = questions;
+  updateMockQuestion();
+}
+
+function updateMockQuestion() {
+  var qNum = document.getElementById('mock-question-num');
+  var qText = document.getElementById('mock-question-text');
+  var nextBtn = document.getElementById('mock-next-btn');
+  if (!qNum || !qText) return;
+
+  var total = mockState.questions.length;
+  var current = mockState.currentQuestion;
+
+  qNum.textContent = 'Question ' + (current + 1) + ' of ' + total;
+  qText.textContent = mockState.questions[current];
+
+  if (current >= total - 1) {
+    nextBtn.textContent = 'Final Question — End Interview';
+    nextBtn.onclick = endMockInterview;
+  }
+
+  // Add question label to transcript
+  mockState.transcript.push('\n[Question ' + (current + 1) + ': ' + mockState.questions[current] + ']\n');
+  var liveEl = document.getElementById('mock-transcript-live');
+  if (liveEl) liveEl.textContent = mockState.transcript.join(' ');
+
+  // Capture frame at each new question
+  captureFrame();
+}
+
+function mockNextQuestion() {
+  mockState.currentQuestion++;
+  if (mockState.currentQuestion >= mockState.questions.length) {
+    endMockInterview();
+  } else {
+    updateMockQuestion();
+  }
+}
+
+function captureFrame() {
+  var video = document.getElementById('mock-video');
+  if (!video || !mockState.isRecording) return;
+  try {
+    var canvas = document.createElement('canvas');
+    canvas.width = 320; canvas.height = 180;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    var dataURL = canvas.toDataURL('image/jpeg', 0.7);
+    var qIdx = mockState.currentQuestion;
+    mockState.capturedFrames.push({
+      dataURL: dataURL,
+      questionIndex: qIdx,
+      questionText: mockState.questions[qIdx] || 'General',
+      timestamp: new Date().toISOString()
+    });
+  } catch(e) { console.warn('Frame capture failed:', e); }
+}
+
+function endMockInterview() {
+  mockState.isRecording = false;
+
+  // Stop frame capture
+  if (mockState.frameCaptureInterval) clearInterval(mockState.frameCaptureInterval);
+
+  // Capture final frame
+  captureFrame();
+
+  // Stop speech recognition
+  if (mockState.recognition) {
+    try { mockState.recognition.stop(); } catch(e) {}
+  }
+
+  // Stop recording
+  if (mockState.mediaRecorder && mockState.mediaRecorder.state !== 'inactive') {
+    mockState.mediaRecorder.stop();
+  }
+
+  // Stop camera tracks
+  setTimeout(function() {
+    // Build playback blob
+    if (mockState.recordedChunks.length > 0) {
+      var blob = new Blob(mockState.recordedChunks, {type:'video/webm'});
+      var url = URL.createObjectURL(blob);
+      var playback = document.getElementById('mock-playback');
+      if (playback) { playback.src = url; playback.style.display = 'block'; }
+    }
+
+    // Stop camera
+    if (mockState.stream) {
+      mockState.stream.getTracks().forEach(function(t){ t.stop(); });
+    }
+
+    // Hide rec indicator
+    var rec = document.getElementById('mock-rec-indicator');
+    if (rec) rec.style.display = 'none';
+
+    // Build full transcript
+    var fullTranscript = mockState.transcript.join(' ')
+      .replace(/\[Question/g, '\n\n[Question')
+      .trim();
+    var transcriptEl = document.getElementById('mock-transcript-full');
+    if (transcriptEl) transcriptEl.textContent = fullTranscript || 'No transcript captured. Please ensure microphone permissions are granted.';
+
+    // Show results
+    document.getElementById('mock-active').style.display = 'none';
+    document.getElementById('mock-results').style.display = 'block';
+  }, 1200);
+}
+
+function copyMockTranscript() {
+  var el = document.getElementById('mock-transcript-full');
+  if (el) navigator.clipboard.writeText(el.textContent).catch(function(){});
+}
+
+function copyMockDebrief() {
+  var el = document.getElementById('mock-debrief-text');
+  if (el) navigator.clipboard.writeText(el.textContent).catch(function(){});
+}
+
+async function generateMockDebrief() {
+  var btn = document.getElementById('mock-debrief-btn');
+  var outputDiv = document.getElementById('mock-debrief-output');
+  var textEl = document.getElementById('mock-debrief-text');
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner dark"></div><span>Analyzing your performance...</span>';
+  outputDiv.style.display = 'block';
+  textEl.textContent = '';
+  textEl.classList.add('streaming-cursor');
+
+  var transcript = (document.getElementById('mock-transcript-full')||{textContent:''}).textContent || 'No transcript available.';
+  var brief = STATE.savedOutputs['3a'] || '';
+  var company = getInp('3a','company') || 'the target company';
+  var role = getInp('3a','targetrole') || 'the target role';
+
+  // Build messages with frames if available
+  var messages = [];
+  var userContent = [];
+
+  // Add frame images (up to 4 most representative frames)
+  if (mockState.capturedFrames.length > 0) {
+    var frameStep = Math.max(1, Math.floor(mockState.capturedFrames.length / 4));
+    var selectedFrames = [];
+    for (var i = 0; i < mockState.capturedFrames.length; i += frameStep) {
+      if (selectedFrames.length < 4) selectedFrames.push(mockState.capturedFrames[i]);
+    }
+    selectedFrames.forEach(function(frame, idx) {
+      var base64 = frame.dataURL.split(',')[1];
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/jpeg', data: base64 }
+      });
+      userContent.push({
+        type: 'text',
+        text: 'Frame ' + (idx+1) + ' captured during: ' + frame.questionText
+      });
+    });
+  }
+
+  var promptText = 'Act as an elite executive interview coach. I just completed a mock interview practice session for '+company+'. Below is my full transcript and video frames captured during the session.\n\nFULL INTERVIEW TRANSCRIPT:\n'+transcript+'\n\n'+(brief?'INTERVIEW INTELLIGENCE BRIEF (for context on the company and role):\n'+brief.substring(0,2000)+'\n\n':'')+'Produce a comprehensive performance debrief with three distinct sections:\n\nSECTION 1 — CONTENT ANALYSIS\nFor each question answered: what landed, what was missing, what should be added or removed. Overall narrative strength and whether answers demonstrate executive presence at the level required for this role.\n\nSECTION 2 — DELIVERY ANALYSIS\nBased on the transcript: filler words and frequency, answer length (too short/too long), structure (did answers follow a clear structure like STAR), confidence indicators in language, moments where delivery was strongest and weakest.\n\nSECTION 3 — BODY LANGUAGE & PRESENCE\nBased on the video frames: eye contact and camera engagement, posture and composure, facial expression and emotional range, overall executive presence in the frame. Be specific about what you observe in the images.\n\nSECTION 4 — TOP 3 PRIORITIES\nThe three most important things to work on before the real interview, in priority order. Be direct and specific.\n\nSECTION 5 — WHAT TO DO BEFORE THE INTERVIEW\nThree concrete actions to take in the next 48 hours.\n\nBe direct, specific, and honest. This person is preparing for a high-stakes executive interview. Generic feedback is useless.';
+
+  userContent.push({ type: 'text', text: promptText });
+  messages.push({ role: 'user', content: userContent });
+
+  try {
+    var r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: 'You are an elite executive interview coach. Provide direct, specific, actionable feedback. Analyze both the transcript content and the video frames provided.',
+        messages: messages
+      })
+    });
+    var d = await r.json();
+    textEl.classList.remove('streaming-cursor');
+    if (d.error) {
+      textEl.textContent = 'Error generating debrief: ' + d.error.message;
+      console.error('Debrief error:', d.error);
+    } else {
+      var text = d.content.map(function(b){ return b.text||''; }).join('');
+      textEl.textContent = text;
+      btn.innerHTML = '<span>✓ Debrief Generated — Copy or Download Above</span>';
+      // Save to state
+      if (!STATE.savedOutputs) STATE.savedOutputs = {};
+      STATE.savedOutputs['3a_debrief'] = text;
+      saveState();
+    }
+  } catch(e) {
+    textEl.classList.remove('streaming-cursor');
+    textEl.textContent = 'Connection error. Please try again.';
+    btn.disabled = false;
+    btn.innerHTML = '<span>Generate AI Debrief</span>';
+    console.error('Debrief fetch error:', e);
+  }
+}
+NTS = {
 '0':{title:'Career Capital Assessment',subtitle:'Know precisely what you bring before you tell a single person.',number:'Agent 0',carries:[],inputs:[],checklist:[],next:'0b',saveLabel:''},
 '0b':{title:'Resume Intelligence',subtitle:'Your resume rebuilt \u2014 optimized for ATS, recruiters, executives, and boards.',number:'Agent 0B',carries:[],inputs:[],checklist:[],next:'0c',saveLabel:''},
 '0c':{title:'LinkedIn Profile Intelligence',subtitle:'Your complete LinkedIn profile \u2014 every section \u2014 optimized for the algorithm and your audience.',number:'Agent 0C',carries:[],inputs:[],checklist:[],next:'0.5a',saveLabel:''},
