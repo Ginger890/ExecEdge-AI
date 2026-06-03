@@ -199,43 +199,43 @@ input[type=range]{width:100%;accent-color:var(--gold)}
       <div class="input-wrap">
         <div class="input-label">Your Most Recent Role &amp; Organization <span class="req">Required</span></div>
         <div class="input-hint">Title, organization, dates. Include any notable context — client type, contract size, team size, clearance level if applicable.</div>
-        <textarea id="recent-role" rows="3" placeholder="e.g. Lead/Project Manager / Director of Training, Cathexis, 20XX–2025. Led curriculum development team. Grew team from 1 to 40. Primary client: [agency/contractor]. Held [clearance level] clearance."></textarea>
+        <textarea id="recent-role" rows="3" placeholder="e.g. Chief Operating Officer, Acme Corp, 2021–2025. Led operations across 4 business units, $180M P&L, 320 employees. Departed in a restructuring following private equity acquisition."></textarea>
       </div>
 
       <div class="input-wrap">
         <div class="input-label">Your Complete Career Arc <span class="req">Required</span></div>
         <div class="input-hint">Every significant role — delivery side, management side, consulting, government, corporate. Dates and context. The more complete, the more accurate the path scoring.</div>
-        <textarea id="career-arc" rows="6" placeholder="Walk through your career in sequence — roles, organizations, years, what you did. Include the delivery-side experience before moving into curriculum development/management. Note any military, government, clearance, or instructional design background."></textarea>
+        <textarea id="career-arc" rows="6" placeholder="Walk through your career in sequence — roles, organizations, years, what you did. Include industry context, company size, ownership type (public/private/PE/nonprofit), and scope at each stage. The more complete, the more accurate the path scoring."></textarea>
       </div>
 
       <div class="input-wrap">
         <div class="input-label">Your Highest-Value Accomplishments <span class="req">Required</span></div>
         <div class="input-hint">The 4–6 things you are most proud of — with specifics. Numbers, scale, difficulty, outcome. Do not be modest.</div>
-        <textarea id="accomplishments" rows="5" placeholder="e.g. Built curriculum development team from 1 to 40 in [X years] while maintaining client relationship through significant program complexity. Delivered [X] courses / trained [X] learners / managed $[X] curriculum budget. Held client through a contract transition that [context]..."></textarea>
+        <textarea id="accomplishments" rows="5" placeholder="The 4–6 things you are most proud of — with specifics. Numbers, scale, difficulty, outcome. Revenue grown, costs cut, teams built, transformations led, deals closed, crises navigated. Do not be modest."></textarea>
       </div>
 
       <!-- STEP 2: PATH SELECTION -->
       <div class="section-hed">Step 2 &mdash; Paths to Analyze</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">Select all paths you want analyzed. Unsure? Select all three — that is the point of this agent.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">Define up to three paths to analyze. Be specific — a title, an industry, a type of role, or a direction. The more precise the path, the more precise the analysis. Leave a path blank to skip it.</p>
 
       <div class="path-cards">
-        <div class="path-card selected" id="pc-defense" onclick="togglePath('defense',this)">
-          <div class="path-check">&#10003; Selected</div>
+        <div class="path-card" style="cursor:default">
           <div class="path-icon">&#9670;</div>
-          <div class="path-name">Defense &amp; Government Contracting</div>
-          <div class="path-desc">Training leadership roles in federal agencies, defense contractors, and national security environments. Leverages clearance, Booz Allen pedigree, and government client experience directly.</div>
+          <div class="path-name" style="font-size:13px;margin-bottom:8px">Path One <span style="color:var(--gold-dark);font-size:10px">Required</span></div>
+          <input type="text" id="path1-name" placeholder="e.g. Chief Operating Officer — PE-backed healthcare" style="width:100%;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-primary);background:var(--surface-tinted);margin-bottom:6px" oninput="saveState()">
+          <textarea id="path1-desc" rows="2" placeholder="Describe this path in a sentence — what it looks like, why it's on the table." style="width:100%;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-primary);background:var(--surface-tinted);resize:vertical" oninput="saveState()"></textarea>
         </div>
-        <div class="path-card selected" id="pc-corporate" onclick="togglePath('corporate',this)">
-          <div class="path-check">&#10003; Selected</div>
+        <div class="path-card" style="cursor:default">
           <div class="path-icon">&#9671;</div>
-          <div class="path-name">Corporate L&amp;D Leadership</div>
-          <div class="path-desc">CLO, VP of Learning, Director of L&amp;D roles in Fortune 500, tech, financial services, or professional services. Translates government training scale into enterprise human capital impact.</div>
+          <div class="path-name" style="font-size:13px;margin-bottom:8px">Path Two <span style="color:var(--text-muted);font-size:10px">Optional</span></div>
+          <input type="text" id="path2-name" placeholder="e.g. Board Director — financial services" style="width:100%;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-primary);background:var(--surface-tinted);margin-bottom:6px" oninput="saveState()">
+          <textarea id="path2-desc" rows="2" placeholder="Describe this path in a sentence — what it looks like, why it's on the table." style="width:100%;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-primary);background:var(--surface-tinted);resize:vertical" oninput="saveState()"></textarea>
         </div>
-        <div class="path-card selected" id="pc-independent" onclick="togglePath('independent',this)">
-          <div class="path-check">&#10003; Selected</div>
+        <div class="path-card" style="cursor:default">
           <div class="path-icon">&#9672;</div>
-          <div class="path-name">Independent Consultancy</div>
-          <div class="path-desc">Build a solo or boutique training consulting practice. Government contracts, corporate L&amp;D advisory, curriculum design, or team-building consulting. Highest autonomy, variable income.</div>
+          <div class="path-name" style="font-size:13px;margin-bottom:8px">Path Three <span style="color:var(--text-muted);font-size:10px">Optional</span></div>
+          <input type="text" id="path3-name" placeholder="e.g. Independent consulting practice" style="width:100%;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-primary);background:var(--surface-tinted);margin-bottom:6px" oninput="saveState()">
+          <textarea id="path3-desc" rows="2" placeholder="Describe this path in a sentence — what it looks like, why it's on the table." style="width:100%;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-primary);background:var(--surface-tinted);resize:vertical" oninput="saveState()"></textarea>
         </div>
       </div>
 
@@ -272,11 +272,11 @@ input[type=range]{width:100%;accent-color:var(--gold)}
 
       <div class="slider-wrap">
         <div class="slider-row">
-          <div class="slider-label">Tolerance for government/clearance-related constraints</div>
-          <div class="slider-val" id="sv-gov">5</div>
+          <div class="slider-label">Risk tolerance — stability vs. upside</div>
+          <div class="slider-val" id="sv-risk">5</div>
         </div>
-        <input type="range" min="1" max="10" value="5" step="1" id="sl-gov" oninput="document.getElementById('sv-gov').textContent=this.value">
-        <div class="slider-ends"><span>1 = Done with government world — want out</span><span>10 = Government/defense is my lane, stay in it</span></div>
+        <input type="range" min="1" max="10" value="5" step="1" id="sl-risk" oninput="document.getElementById('sv-risk').textContent=this.value">
+        <div class="slider-ends"><span>1 = Prioritize stability and security</span><span>10 = Willing to take significant risk for higher upside</span></div>
       </div>
 
       <div class="slider-wrap">
@@ -295,7 +295,7 @@ input[type=range]{width:100%;accent-color:var(--gold)}
         <div class="input-wrap">
           <div class="input-label">Geographic Flexibility <span class="req">Required</span></div>
           <div class="input-hint">Open to relocation? Remote-first? Specific metro area?</div>
-          <textarea id="geography" rows="2" placeholder="e.g. DC metro preferred, open to remote, not relocating outside Southeast"></textarea>
+          <textarea id="geography" rows="2" placeholder="e.g. Southeast US preferred, open to remote, not relocating"></textarea>
         </div>
         <div class="input-wrap">
           <div class="input-label">Timeline &amp; Financial Runway</div>
@@ -305,15 +305,15 @@ input[type=range]{width:100%;accent-color:var(--gold)}
       </div>
 
       <div class="input-wrap">
-        <div class="input-label">Clearance Status</div>
-        <div class="input-hint">Current clearance level and status — active, inactive, sponsored. This directly affects path viability.</div>
-        <textarea id="clearance" rows="2" placeholder="e.g. Active TS/SCI, sponsored by Cathexis — status post-layoff unclear. Or: Secret, lapsed. Or: No clearance."></textarea>
+        <div class="input-label">Compensation Target</div>
+        <div class="input-hint">Total compensation range you are targeting — base, bonus, equity if relevant. Floor and ceiling.</div>
+        <textarea id="compensation" rows="2" placeholder="e.g. Base $250K–$325K, bonus 20–30%, open to equity in smaller companies. Floor is $220K total cash."></textarea>
       </div>
 
       <div class="input-wrap">
         <div class="input-label">What You Know You Do Not Want</div>
         <div class="input-hint">The constraints are as important as the preferences. Be direct.</div>
-        <textarea id="dont-want" rows="3" placeholder="e.g. No more clients who move the goalposts without notice. No pure delivery roles — I have earned the management track. No commute over 45 minutes. No solo roles where I am rebuilding a broken function alone again without the right resources."></textarea>
+        <textarea id="dont-want" rows="3" placeholder="e.g. No turnaround situations without the right resources. No pure individual contributor roles. No commute over 45 minutes. No industries where I have no relationships."></textarea>
       </div>
 
       <div class="input-wrap">
@@ -382,12 +382,9 @@ function toggleNav(){
   document.getElementById('nav-overlay').classList.toggle('open');
 }
 
-// ── PATH TOGGLE ──
-var selectedPaths = {defense:true, corporate:true, independent:true};
-function togglePath(key, card){
-  selectedPaths[key] = !selectedPaths[key];
-  card.classList.toggle('selected', selectedPaths[key]);
-}
+// ── PATH TOGGLE (kept for compatibility, no longer used) ──
+var selectedPaths = {};
+function togglePath(key, card){ }
 
 // ── CHECKLIST ──
 function toggleCheck(item){
@@ -399,8 +396,9 @@ function toggleCheck(item){
 
 // ── HELPERS ──
 function v(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; }
-function sv(id){ return document.getElementById(id).value; }
+function sv(id){ var el = document.getElementById(id); return el ? el.value : '5'; }
 function escHtml(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function saveState(){}
 
 // ── OUTPUT STATE ──
 var lastOutput = '';
@@ -434,9 +432,8 @@ async function generate(){
   if(!v('recent-role')) missing.push('Most Recent Role (Step 1)');
   if(!v('career-arc')) missing.push('Career Arc (Step 1)');
   if(!v('accomplishments')) missing.push('Accomplishments (Step 1)');
+  if(!v('path1-name')) missing.push('At least one path to analyze (Step 2)');
   if(!v('geography')) missing.push('Geographic Flexibility (Step 4)');
-  var pathsSelected = Object.values(selectedPaths).some(function(v){return v;});
-  if(!pathsSelected){ missing.push('At least one path to analyze (Step 2)'); }
 
   if(missing.length){
     errBox.textContent = 'Please complete the following before generating:\n\n' + missing.map(function(m){return '— '+m;}).join('\n');
@@ -452,20 +449,39 @@ async function generate(){
   document.getElementById('checklist-wrap').style.display = 'none';
   document.getElementById('proceed-btn').style.display = 'none';
 
-  var pathList = [];
-  if(selectedPaths.defense) pathList.push('Defense & Government Contracting Leadership');
-  if(selectedPaths.corporate) pathList.push('Corporate L&D Leadership (Fortune 500 / Enterprise)');
-  if(selectedPaths.independent) pathList.push('Independent Training Consultancy');
+  // Build path list from open inputs
+  var paths = [];
+  if(v('path1-name')) paths.push({name: v('path1-name'), desc: v('path1-desc')});
+  if(v('path2-name')) paths.push({name: v('path2-name'), desc: v('path2-desc')});
+  if(v('path3-name')) paths.push({name: v('path3-name'), desc: v('path3-desc')});
+
+  var pathText = paths.map(function(p,i){
+    return 'Path '+(i+1)+': '+p.name+(p.desc?' — '+p.desc:'');
+  }).join('\n');
+
+  var hasIndependent = paths.some(function(p){
+    return p.name.toLowerCase().indexOf('consult') > -1 ||
+           p.name.toLowerCase().indexOf('independ') > -1 ||
+           p.name.toLowerCase().indexOf('fractional') > -1 ||
+           p.name.toLowerCase().indexOf('advisory') > -1 ||
+           p.name.toLowerCase().indexOf('practice') > -1;
+  });
+
+  var financialVal = sv('sl-financial');
+  var autonomyVal = sv('sl-autonomy');
+  var leadershipVal = sv('sl-leadership');
+  var riskVal = sv('sl-risk');
+  var buildVal = sv('sl-build');
 
   var prefs = [
-    'Financial floor need vs. variable income tolerance: ' + sv('sl-financial') + '/10 (' + (sv('sl-financial')<=3?'Needs predictable income now':sv('sl-financial')>=8?'Comfortable with variable/building phase':'Moderate tolerance') + ')',
-    'Autonomy vs. organizational belonging: ' + sv('sl-autonomy') + '/10 (' + (sv('sl-autonomy')<=3?'Wants to be part of a team':sv('sl-autonomy')>=8?'Wants full independence':'Balanced') + ')',
-    'Lead people vs. deliver work directly: ' + sv('sl-leadership') + '/10 (' + (sv('sl-leadership')<=3?'Wants to lead and manage teams again':sv('sl-leadership')>=8?'Wants hands-on delivery':'Balanced') + ')',
-    'Government/clearance tolerance: ' + sv('sl-gov') + '/10 (' + (sv('sl-gov')<=3?'Wants out of government world':sv('sl-gov')>=8?'Government/defense is preferred lane':'Moderate') + ')',
-    'Energy for building vs. joining established: ' + sv('sl-build') + '/10 (' + (sv('sl-build')<=3?'Wants to join something already working':sv('sl-build')>=8?'Wants to build from scratch':'Balanced') + ')'
+    'Financial floor need vs. variable income tolerance: ' + financialVal + '/10 (' + (financialVal<=3?'Needs predictable income now':financialVal>=8?'Comfortable with variable/building phase':'Moderate tolerance') + ')',
+    'Autonomy vs. organizational belonging: ' + autonomyVal + '/10 (' + (autonomyVal<=3?'Wants to be part of a team':autonomyVal>=8?'Wants full independence':'Balanced') + ')',
+    'Lead people vs. deliver work directly: ' + leadershipVal + '/10 (' + (leadershipVal<=3?'Wants to lead and manage teams again':leadershipVal>=8?'Wants hands-on delivery':'Balanced') + ')',
+    'Risk tolerance — stability vs. upside: ' + riskVal + '/10 (' + (riskVal<=3?'Prioritizes stability and security':riskVal>=8?'High risk tolerance, wants upside':'Moderate') + ')',
+    'Energy for building vs. joining established: ' + buildVal + '/10 (' + (buildVal<=3?'Wants to join something already working':buildVal>=8?'Wants to build from scratch':'Balanced') + ')'
   ].join('\n');
 
-  var prompt = `You are ExecEdge AI™, an elite executive career operating system. I need a complete Career Capital Options Analysis for a training leader who was just laid off and does not yet know which direction to pursue.
+  var prompt = `You are ExecEdge AI™, an elite executive career operating system. Produce a complete Career Capital Options Analysis for this executive. They have provided their career capital and defined the paths they want evaluated. Your job is to be a trusted, rigorous peer advisor — direct, honest, no cheerleading, no generic language. Every sentence must be specific to this person's actual background.
 
 CAREER CAPITAL SUMMARY FROM AGENT 0:
 ${v('ccs')}
@@ -480,101 +496,95 @@ KEY ACCOMPLISHMENTS:
 ${v('accomplishments')}
 
 PATHS TO ANALYZE:
-${pathList.join('\n')}
+${pathText}
 
 PREFERENCE CALIBRATION (honest self-assessments, 1–10 scale):
 ${prefs}
 
 GEOGRAPHIC FLEXIBILITY: ${v('geography')}
 TIMELINE & FINANCIAL RUNWAY: ${v('timeline') || 'Not specified'}
-CLEARANCE STATUS: ${v('clearance') || 'Not specified'}
+COMPENSATION TARGET: ${v('compensation') || 'Not specified'}
 WHAT THEY DO NOT WANT: ${v('dont-want') || 'Not specified'}
 OTHER CONTEXT: ${v('context-other') || 'None provided'}
 
-Produce a complete Career Capital Options Analysis. No generic language. Every sentence specific to this person's background. Write as a trusted peer advisor who is also a rigorous analyst — direct, honest, no cheerleading.
-
 ═══════════════════════════════════════════════════════════════
-SECTION 1 — CAREER CAPITAL INVENTORY FOR TRAINING PROFESSIONALS
+SECTION 1 — CAREER CAPITAL INVENTORY
 ═══════════════════════════════════════════════════════════════
 Identify and name the specific career capital this person has built across three categories:
-A. Organizational Capital — team building, client management, program scale, budget, complexity managed
-B. Domain Capital — curriculum development expertise, instructional design knowledge, delivery-side depth, subject matter areas
-C. Network Capital — Booz Allen alumni network, government agency relationships, contractor ecosystem, clearance community
+A. Organizational Capital — scope led, teams built, P&L owned, complexity managed, client or stakeholder relationships
+B. Domain Capital — functional expertise, technical knowledge, industry depth, credentials, rare skills
+C. Network Capital — the relationships, communities, and ecosystems this person can access
 
-Be specific. Name what is genuinely rare and valuable versus what is common in the training market.
+Be specific. Name what is genuinely rare and differentiated versus what is common at this level.
 
 ═══════════════════════════════════════════════════════════════
-SECTION 2 — PATH ANALYSIS: [Analyze each selected path as its own section]
+SECTION 2 — PATH ANALYSIS (one section per path provided)
 ═══════════════════════════════════════════════════════════════
-For each selected path, produce:
+For EACH path the executive defined, produce:
 
-PATH NAME
-Fit Score: [X/10] — [one sentence explaining the score]
+[PATH NAME AS PROVIDED]
+Fit Score: [X/10] — [one sentence explaining the score specific to this person]
 
 WHAT WORKS IN YOUR FAVOR
-— [3–5 specific reasons this path fits this person's actual background]
+— [3–5 specific reasons this path fits this person's actual background and capital]
 
 HONEST TRADE-OFFS AND FRICTION POINTS
-— [3–5 specific challenges, gaps, or realities they need to face]
+— [3–5 specific challenges, gaps, or market realities they need to face on this path]
 
 REALISTIC TARGET TITLES
 — [3–5 specific titles they could credibly pursue on this path]
 
 MARKET REALITY
-— [2–3 sentences on what the hiring market actually looks like for this path right now — competition, demand, who is hiring, typical comp range]
-
-CLEARANCE IMPACT
-— [How their clearance status helps, hurts, or is irrelevant on this path]
+— [2–3 sentences: what the hiring or client market actually looks like for this path right now — competition, demand, who is buying, typical comp range]
 
 PREFERENCE ALIGNMENT
-— [How this path maps to their stated preferences — be specific about conflicts]
+— [How this path maps to their stated preferences — name any conflicts directly]
 
 ═══════════════════════════════════════════════════════════════
-SECTION 3 — DEPARTURE NARRATIVE PREVIEW
+SECTION 3 — DEPARTURE NARRATIVE BY PATH
 ═══════════════════════════════════════════════════════════════
-Write one paragraph that pre-empts the "why did you leave Cathexis" question for each path. Each version should be true, brief, and strategically positioned. The layoff context — budget cycles, contract losses, defense contractor restructuring — should be handled matter-of-factly, not defensively.
+For each path, write one paragraph that handles the "why did you leave / why are you available" question. Each version should be true, brief, and strategically positioned for that specific audience. Handle any sensitive departure context matter-of-factly, not defensively.
 
 ═══════════════════════════════════════════════════════════════
 SECTION 4 — THE TRANSLATION PROBLEM
 ═══════════════════════════════════════════════════════════════
-This person spent their career in government/defense training. Identify the specific translation work required for each path:
-— What language needs to change (government jargon → civilian/corporate equivalents)
-— What accomplishments need reframing (and how)
-— What experience will be undervalued and needs a deliberate positioning strategy
-— What experience is genuinely rare and should be led with on each path
+Based on their background, identify the specific translation work required to move across paths:
+— What language needs to change for each audience
+— What accomplishments need reframing and how
+— What experience risks being undervalued and needs deliberate positioning
+— What experience is genuinely rare and should be led with
 
 ═══════════════════════════════════════════════════════════════
-SECTION 5 — THE INDEPENDENT PATH SPECIFICS
+${hasIndependent ? `SECTION 5 — THE INDEPENDENT PATH SPECIFICS
 ═══════════════════════════════════════════════════════════════
-(Include only if independent consultancy was selected)
-This section is for the consulting path only. Be specific:
+For any independent/consulting/fractional path defined above, be specific:
 — What would the practice actually look like? Describe the most realistic version.
 — Who would be the first 3–5 clients most likely to hire them, and why?
 — What is the realistic Year 1 revenue range and how would they get there?
-— What is the single biggest mistake training professionals make when going independent, and how should they avoid it?
-— Is this a viable first move right now, or does it make more sense as a second act after re-establishing in an organizational role?
+— What is the single biggest mistake executives make when going independent from this type of background?
+— Is this a viable first move right now, or a better second act after re-establishing market position?
 
-═══════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════` : ''}
 SECTION 6 — RECOMMENDED PATH
 ═══════════════════════════════════════════════════════════════
 Label clearly: RECOMMENDED PATH — [PATH NAME]
 
-State the recommendation directly. Then explain why — specific to this person's capital, preferences, and market reality. Do not hedge excessively. This is a recommendation, not a menu.
+State the recommendation directly. Explain why — specific to this person's capital, preferences, timeline, and market reality. Do not hedge excessively. This is a recommendation, not a menu.
 
 Also state: SECOND CHOICE — [PATH NAME] and why.
 
-If the preference calibration creates a meaningful conflict with the highest-fit path, name it directly and explain what it means.
+If the preference calibration creates a meaningful conflict with the highest-fit path, name it and explain what it means.
 
 ═══════════════════════════════════════════════════════════════
 SECTION 7 — IMMEDIATE NEXT STEPS
 ═══════════════════════════════════════════════════════════════
 Based on the recommended path, produce a specific 30-day action plan:
-— Week 1 (after the week off): What to do first and why
+— Week 1: What to do first and why
 — Week 2: First market-facing moves
 — Week 3: Outreach begins
 — Week 4: Pipeline building
 
-Include one specific warning: the thing people in this person's situation almost always do wrong in the first 30 days, and how to avoid it.
+Include one specific warning: the thing people in this situation almost always do wrong in the first 30 days, and how to avoid it.
 
 End with: TARGET TITLE FOR AGENT 0B — [the specific title they should optimize their resume toward]`;
 
