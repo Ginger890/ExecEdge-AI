@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Intelligence — Standalone Prep Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C3D5A; --navy-dk:#0E1A2B; --gold:#B8973A; --gold-lt:#E8D28A;
+    --cream:#F7F4ED; --cream-dk:#EFEAE0; --border:#D8D0BE; --border-strong:#C2B89C;
+    --text:#222A33; --text-muted:#5A6470; --success:#2E7D52; --danger:#A23B3B;
+    --surface:#FFFFFF; --font-display:'Cormorant Garamond',serif; --font-body:'DM Sans',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.55}
+  .shell{max-width:880px;margin:0 auto;padding:0 24px 80px}
+  header{background:linear-gradient(135deg,var(--navy-dk),var(--navy));color:#fff;padding:38px 24px 30px;margin-bottom:0}
+  .header-inner{max-width:880px;margin:0 auto}
+  .brand-line{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:8px}
+  h1{font-family:var(--font-display);font-weight:600;font-size:34px;margin:0 0 8px;letter-spacing:.01em}
+  .sub{color:rgba(255,255,255,.78);font-size:14px;max-width:640px}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px 28px;margin:24px 0}
+  .panel-tight{padding:20px 24px}
+  .step-badge{display:inline-block;background:var(--navy);color:#fff;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:5px 11px;border-radius:20px;margin-bottom:14px;font-weight:600}
+  .step-badge.gold{background:var(--gold);color:var(--navy-dk)}
+  h2{font-family:var(--font-display);font-size:23px;font-weight:600;color:var(--navy);margin:0 0 6px}
+  .desc{color:var(--text-muted);font-size:13.5px;margin-bottom:18px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;letter-spacing:.01em}
+  .req{color:var(--danger);font-size:10px;font-weight:600;margin-left:4px}
+  .hint{font-size:11.5px;color:var(--text-muted);margin-bottom:6px}
+  textarea,input[type=text]{width:100%;border:1px solid var(--border-strong);border-radius:6px;padding:10px 12px;font-family:var(--font-body);font-size:13px;color:var(--text);background:#FCFBF8;resize:vertical}
+  textarea:focus,input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,151,58,.15)}
+  .field{margin-bottom:16px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.row2{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;border:none;border-radius:7px;padding:12px 22px;font-size:13px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:background .15s}
+  .btn:hover{background:var(--navy-dk)}
+  .btn:disabled{background:#B8B8B8;cursor:not-allowed}
+  .btn.gold{background:var(--gold);color:var(--navy-dk)}
+  .btn.gold:hover{background:#A6852E}
+  .btn.ghost{background:transparent;border:1px solid var(--border-strong);color:var(--navy)}
+  .btn.ghost:hover{background:var(--cream-dk)}
+  .btn.small{padding:8px 14px;font-size:12px}
+  .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .output{background:var(--cream-dk);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin-top:18px;white-space:pre-wrap;font-size:13px;line-height:1.65;max-height:none}
+  .output-placeholder{color:var(--text-muted);font-style:italic}
+  .output-actions{display:flex;gap:8px;margin-bottom:12px}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:13px;padding:14px 0}
+  .spinner{width:16px;height:16px;border:2px solid var(--border-strong);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--border)}
+  .tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent}
+  .tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .company-section{border-left:3px solid var(--gold);padding-left:18px;margin-bottom:10px}
+  .company-title{font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px}
+  .company-when{font-size:11.5px;color:var(--text-muted);background:var(--cream-dk);padding:3px 10px;border-radius:20px}
+  .qa-block{border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;background:#FCFBF8}
+  .qa-q{font-weight:600;color:var(--navy);margin-bottom:10px;font-size:13.5px}
+  .qa-q .qnum{display:inline-block;background:var(--navy);color:#fff;font-size:10px;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;margin-right:8px}
+  .qa-answer{width:100%;border:1px solid var(--border-strong);border-radius:6px;padding:9px 11px;font-size:13px;font-family:var(--font-body);resize:vertical;margin-bottom:10px}
+  .qa-feedback{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-strong)}
+  .score-pill{display:inline-block;font-weight:700;font-size:13px;border-radius:20px;padding:3px 12px;margin-bottom:8px}
+  .score-high{background:#E2F1E8;color:var(--success)}
+  .score-mid{background:#FBF0DA;color:#8A5A00}
+  .score-low{background:#F7E3E3;color:var(--danger)}
+  .error-box{background:#FBEAEA;border:1px solid #E3B6B6;color:var(--danger);border-radius:6px;padding:12px 14px;font-size:13px;margin-top:12px}
+  .footer-note{text-align:center;color:var(--text-muted);font-size:11.5px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+  .copy-toast{position:fixed;bottom:24px;right:24px;background:var(--navy-dk);color:#fff;padding:10px 18px;border-radius:6px;font-size:12.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+  .copy-toast.show{opacity:1}
+  .divider{height:1px;background:var(--border);margin:26px 0}
+  .key-banner{background:#FBF0DA;border:1px solid #E3CB8A;border-radius:8px;padding:12px 16px;font-size:12.5px;color:#6B4F12;margin-bottom:20px}
+  .key-banner input{margin-top:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand-line">CareerLaunch AI™ &nbsp;·&nbsp; Standalone Module</div>
+    <h1>Interview Intelligence</h1>
+    <div class="sub">A focused, no-setup interview prep tool. Generate a full intelligence brief for each company you're interviewing with, then run a text-based mock interview that rates, critiques, and rewrites every answer.</div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="key-banner" id="keyBanner">
+    <strong>One-time setup:</strong> This tool calls the Claude API directly from your browser. Paste your Anthropic API key below — it stays in your browser and is never sent anywhere except Anthropic's API.
+    <input type="text" id="apiKeyInput" placeholder="sk-ant-..." style="margin-top:8px">
+    <div style="margin-top:8px"><button class="btn small" onclick="saveApiKey()">Save Key</button> <span id="keyStatus" style="font-size:12px;margin-left:8px"></span></div>
+  </div>
+
+  <!-- ===================== COMPANY TABS ===================== -->
+  <div class="tabs" id="companyTabs"></div>
+  <div id="companyPanels"></div>
+
+  <div class="actions" style="margin-top:8px">
+    <button class="btn ghost small" onclick="addCompany()">+ Add Another Company</button>
+  </div>
+
+  <div class="footer-note">
+    CareerLaunch AI™ &nbsp;·&nbsp; Interview Intelligence module &nbsp;·&nbsp; Standalone version for time-sensitive prep &nbsp;·&nbsp; Confidential
+  </div>
+</div>
+
+<div class="copy-toast" id="copyToast">Copied to clipboard</div>
+
+<script>
+// ============================================================================
+// STATE
+// ============================================================================
+let companies = [
+  { id: 'c1', name: '', when: 'Interview 1', jd: '', interviewers: '', format: '', research: '',
+    brief: '', briefLoading: false, briefError: '',
+    mockStarted: false, mockQuestions: [], mockAnswers: {}, mockFeedback: {}, mockLoading: {}, mockError: '' },
+  { id: 'c2', name: '', when: 'Interview 2', jd: '', interviewers: '', format: '', research: '',
+    brief: '', briefLoading: false, briefError: '',
+    mockStarted: false, mockQuestions: [], mockAnswers: {}, mockFeedback: {}, mockLoading: {}, mockError: '' }
+];
+let activeCompany = 'c1';
+let apiKey = localStorage.getItem('ii_api_key') || '';
+
+// ============================================================================
+// API KEY HANDLING
+// ============================================================================
+function saveApiKey(){
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if(!val){ document.getElementById('keyStatus').textContent = 'Please paste a key.'; return; }
+  apiKey = val;
+  localStorage.setItem('ii_api_key', val);
+  document.getElementById('keyStatus').textContent = '✓ Saved';
+  document.getElementById('keyStatus').style.color = 'var(--success)';
+  setTimeout(()=>{ document.getElementById('keyBanner').style.display = 'none'; }, 900);
+}
+if(apiKey){ document.getElementById('keyBanner').style.display = 'none'; }
+
+// ============================================================================
+// CLAUDE API CALL
+// ============================================================================
+async function callClaude(promptText, maxTokens){
+  if(!apiKey){
+    document.getElementById('keyBanner').style.display = 'block';
+    throw new Error('Please enter and save your Anthropic API key above first.');
+  }
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens || 4000,
+      messages: [{ role: 'user', content: promptText }]
+    })
+  });
+  if(!resp.ok){
+    const errBody = await resp.text();
+    throw new Error('API error (' + resp.status + '): ' + errBody.substring(0,200));
+  }
+  const data = await resp.json();
+  const textBlocks = data.content.filter(b => b.type === 'text').map(b => b.text);
+  return textBlocks.join('\n');
+}
+
+// ============================================================================
+// RENDER
+// ============================================================================
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function render(){
+  renderTabs();
+  renderPanels();
+}
+
+function renderTabs(){
+  const tabsEl = document.getElementById('companyTabs');
+  let html = '';
+  companies.forEach(c => {
+    const label = c.name ? c.name : c.when;
+    html += `<div class="tab ${c.id===activeCompany?'active':''}" onclick="switchCompany('${c.id}')">${esc(label)}</div>`;
+  });
+  tabsEl.innerHTML = html;
+}
+
+function switchCompany(id){ activeCompany = id; render(); }
+
+function addCompany(){
+  const n = companies.length + 1;
+  const id = 'c' + n;
+  companies.push({ id, name:'', when:'Interview ' + n, jd:'', interviewers:'', format:'', research:'',
+    brief:'', briefLoading:false, briefError:'',
+    mockStarted:false, mockQuestions:[], mockAnswers:{}, mockFeedback:{}, mockLoading:{}, mockError:'' });
+  activeCompany = id;
+  render();
+}
+
+function updateField(id, field, value){
+  const c = companies.find(x => x.id === id);
+  if(c) c[field] = value;
+  if(field === 'name') renderTabs();
+}
+
+function renderPanels(){
+  const panelsEl = document.getElementById('companyPanels');
+  let html = '';
+  companies.forEach(c => {
+    html += renderCompanyPanel(c);
+  });
+  panelsEl.innerHTML = html;
+  companies.forEach(c => { bindInputs(c); });
+}
+
+function renderCompanyPanel(c){
+  const display = c.id === activeCompany ? 'block' : 'none';
+  let html = `<div style="display:${display}" id="panel_${c.id}">`;
+
+  // -------- STEP 1: Intelligence Brief inputs --------
+  html += `<div class="panel">
+    <span class="step-badge">Step 1</span>
+    <h2>Interview Intelligence Brief</h2>
+    <div class="desc">Fill in what you know. The more specific your inputs, the sharper the brief — but partial information still produces a usable result.</div>
+
+    <div class="row2">
+      <div class="field">
+        <label>When is this interview? <span class="req">Required</span></label>
+        <input type="text" id="in_${c.id}_when" value="${esc(c.when)}" placeholder="e.g. Tomorrow, 10:00 AM">
+      </div>
+      <div class="field">
+        <label>Company Name <span class="req">Required</span></label>
+        <input type="text" id="in_${c.id}_name" value="${esc(c.name)}" placeholder="e.g. Meridian Health Systems">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Job Description <span class="req">Required</span></label>
+      <div class="hint">Paste the full posting if you have it. If not, describe the role in a few sentences.</div>
+      <textarea id="in_${c.id}_jd" rows="6" placeholder="Paste the job description here...">${esc(c.jd)}</textarea>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Interviewers</label>
+        <div class="hint">Name and title for each person, if known.</div>
+        <textarea id="in_${c.id}_interviewers" rows="3" placeholder="e.g. Maria Chen, VP Operations&#10;Tom Reyes, HR Director">${esc(c.interviewers)}</textarea>
+      </div>
+      <div class="field">
+        <label>Interview Format</label>
+        <div class="hint">e.g. one 45-minute panel, or two rounds.</div>
+        <textarea id="in_${c.id}_format" rows="3" placeholder="e.g. One 45-minute interview with the hiring manager and a team lead">${esc(c.format)}</textarea>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>What You Already Know About the Company (Optional)</label>
+      <textarea id="in_${c.id}_research" rows="3" placeholder="Anything you know — recent news, their products, why this role might exist now...">${esc(c.research)}</textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn gold" id="btnBrief_${c.id}" onclick="generateBrief('${c.id}')" ${c.briefLoading?'disabled':''}>
+        ${c.briefLoading ? 'Generating…' : '⚡ Generate Interview Intelligence Brief'}
+      </button>
+    </div>`;
+
+  if(c.briefLoading){
+    html += `<div class="loading"><div class="spinner"></div> Building your intelligence brief — researching question types, drafting answers, preparing your strategy...</div>`;
+  }
+  if(c.briefError){
+    html += `<div class="error-box">${esc(c.briefError)}</div>`;
+  }
+  if(c.brief){
+    html += `<div class="output-actions">
+        <button class="btn ghost small" onclick="copyText('${c.id}_brief')">⎘ Copy</button>
+        <button class="btn ghost small" onclick="downloadText('${c.id}_brief', '${esc(c.name||c.when)}_Interview_Brief')">↓ Download</button>
+      </div>
+      <div class="output" id="out_${c.id}_brief">${esc(c.brief)}</div>`;
+  } else if(!c.briefLoading){
+    html += `<div class="output"><span class="output-placeholder">Your brief will appear here once generated.</span></div>`;
+  }
+  html += `</div>`; // end step 1 panel
+
+  // -------- STEP 2: Mock interview --------
+  html += `<div class="panel">
+    <span class="step-badge gold">Step 2</span>
+    <h2>Text Mock Interview</h2>
+    <div class="desc">Generates 7 realistic questions for this exact company and role. Type your answer to each — you'll get a 1–10 rating, what was missing, and a stronger rewrite before moving to the next question.</div>`;
+
+  if(!c.mockStarted){
+    html += `<div class="actions">
+      <button class="btn gold" onclick="startMock('${c.id}')" ${c.mockLoading.start?'disabled':''}>
+        ${c.mockLoading.start ? 'Preparing questions…' : '▶ Start Mock Interview'}
+      </button>
+    </div>`;
+    if(c.mockLoading.start){
+      html += `<div class="loading"><div class="spinner"></div> Generating interview questions specific to this company and role...</div>`;
+    }
+    if(c.mockError){
+      html += `<div class="error-box">${esc(c.mockError)}</div>`;
+    }
+    if(!c.brief){
+      html += `<div class="hint" style="margin-top:10px">Tip: Generating your Intelligence Brief first (Step 1) produces sharper, more company-specific questions. You can still start the mock interview without it.</div>`;
+    }
+  } else {
+    c.mockQuestions.forEach((q, idx) => {
+      const answered = c.mockFeedback[idx];
+      const loading = c.mockLoading[idx];
+      html += `<div class="qa-block">
+        <div class="qa-q"><span class="qnum">${idx+1}</span>${esc(q)}</div>`;
+      if(!answered){
+        html += `<textarea class="qa-answer" id="ans_${c.id}_${idx}" rows="3" placeholder="Type your answer here..." ${loading?'disabled':''}>${esc(c.mockAnswers[idx]||'')}</textarea>
+          <button class="btn small" onclick="submitAnswer('${c.id}', ${idx})" ${loading?'disabled':''}>${loading?'Evaluating…':'Submit Answer'}</button>`;
+        if(loading) html += `<div class="loading" style="padding-top:10px"><div class="spinner"></div> Scoring your answer...</div>`;
+      } else {
+        const fb = c.mockFeedback[idx];
+        const scoreClass = fb.score >= 8 ? 'score-high' : (fb.score >= 5 ? 'score-mid' : 'score-low');
+        html += `<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px"><strong>Your answer:</strong> ${esc(c.mockAnswers[idx])}</div>
+          <div class="qa-feedback">
+            <div class="score-pill ${scoreClass}">Score: ${fb.score}/10</div>
+            <div style="margin-bottom:8px"><strong>What was missing:</strong> ${esc(fb.missing)}</div>
+            <div><strong>Stronger version:</strong> ${esc(fb.rewrite)}</div>
+          </div>`;
+      }
+      html += `</div>`;
+    });
+    if(c.mockQuestions.length && Object.keys(c.mockFeedback).length === c.mockQuestions.length){
+      html += `<div class="output" style="background:#E2F1E8;border-color:#9DC9AE;color:var(--success);font-weight:600;text-align:center">
+        ✓ Mock interview complete — all 7 questions answered and scored.
+      </div>`;
+    }
+  }
+  html += `</div>`; // end step 2 panel
+
+  html += `</div>`; // end company wrapper
+  return html;
+}
+
+function bindInputs(c){
+  ['when','name','jd','interviewers','format','research'].forEach(f => {
+    const el = document.getElementById('in_' + c.id + '_' + f);
+    if(el){
+      el.addEventListener('input', () => updateField(c.id, f, el.value));
+      el.addEventListener('change', () => updateField(c.id, f, el.value));
+    }
+  });
+}
+
+// ============================================================================
+// BRIEF GENERATION
+// ============================================================================
+async function generateBrief(id){
+  const c = companies.find(x => x.id === id);
+  if(!c) return;
+  c.name = document.getElementById('in_' + id + '_name').value;
+  c.when = document.getElementById('in_' + id + '_when').value;
+  c.jd = document.getElementById('in_' + id + '_jd').value;
+  c.interviewers = document.getElementById('in_' + id + '_interviewers').value;
+  c.format = document.getElementById('in_' + id + '_format').value;
+  c.research = document.getElementById('in_' + id + '_research').value;
+
+  if(!c.name.trim() || !c.jd.trim()){
+    c.briefError = 'Please fill in at least the Company Name and Job Description before generating.';
+    render();
+    return;
+  }
+
+  c.briefError = '';
+  c.briefLoading = true;
+  render();
+
+  const prompt = `Act as a professional Interview Intelligence Agent for an exempt-level job candidate.
+
+Company: ${c.name}
+Job Description:
+${c.jd}
+
+Interviewers: ${c.interviewers || 'Not specified'}
+Interview Format: ${c.format || 'Not specified'}
+What the candidate already knows about the company: ${c.research || 'Nothing additional provided'}
+
+Produce a complete interview intelligence brief with the following sections:
+
+1. Business situation summary — what this company likely does, its probable size, market position, and context, based on the job description and any research provided. If research is thin, reason from the role and industry signals available and clearly note where you are inferring.
+
+2. Strategic priorities — what this role is likely meant to solve for the organization right now, based on the job description.
+
+3. For each named interviewer (or "the interview panel" if none are named): likely concerns, what they will probably be evaluating, and how the candidate should adapt their communication approach.
+
+4. 12 predicted interview questions — a mix of behavioral, situational, and role-specific questions drawn directly from the job description — each with a fully coached sample answer structure (not a generic answer, but a specific framework: what to lead with, what example shape to use, what to quantify).
+
+5. 6 strategic questions the candidate should ask that demonstrate preparation and genuine curiosity about this specific role and company.
+
+6. Likely objections or concerns the candidate's background might raise based on the job description, and how to address each one directly and confidently.
+
+7. A closing statement template the candidate can adapt — positioning them as a strong fit for this specific role.
+
+Be specific to this company and role throughout. Avoid generic interview advice. Write in a direct, practical, professional tone — this is for someone interviewing within the next 48 hours.`;
+
+  try{
+    const result = await callClaude(prompt, 4000);
+    c.brief = result;
+    c.briefLoading = false;
+    render();
+  } catch(err){
+    c.briefError = err.message || 'Something went wrong generating the brief. Please try again.';
+    c.briefLoading = false;
+    render();
+  }
+}
+
+// ============================================================================
+// MOCK INTERVIEW
+// ============================================================================
+async function startMock(id){
+  const c = companies.find(x => x.id === id);
+  if(!c) return;
+
+  c.mockLoading.start = true;
+  c.mockError = '';
+  render();
+
+  const briefContext = c.brief
+    ? `Here is the Interview Intelligence Brief already prepared for this interview:\n${c.brief.substring(0, 3000)}`
+    : `Company: ${c.name || 'Not specified'}\nJob Description: ${c.jd || 'Not specified'}\nInterview format: ${c.format || 'Not specified'}`;
+
+  const prompt = `Act as a thorough, realistic interviewer preparing a candidate for an upcoming interview.
+
+${briefContext}
+
+Generate exactly 7 interview questions in this order:
+1. Company-specific question about their situation, priorities, or challenges
+2. Competency-based question (a specific scenario, not a generic "tell me about a time")
+3. Competency-based question (different competency than question 2)
+4. Role-specific question about the technical or functional work in the job description
+5. A question that challenges or probes a potential gap in the candidate's background
+6. A behavioral question about working with others or handling a difficult situation
+7. A closing question about how the candidate would approach their first 90 days
+
+Return ONLY the 7 questions, one per line, numbered 1 through 7, with no preamble, no extra commentary, and no headers. Just the 7 numbered questions.`;
+
+  try{
+    const result = await callClaude(prompt, 1200);
+    const lines = result.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const questions = lines
+      .map(l => l.replace(/^\d+[\.\)]\s*/, '').trim())
+      .filter(l => l.length > 5)
+      .slice(0, 7);
+    c.mockQuestions = questions.length ? questions : lines.slice(0,7);
+    c.mockStarted = true;
+    c.mockLoading.start = false;
+    render();
+  } catch(err){
+    c.mockError = err.message || 'Could not generate mock interview questions. Please try again.';
+    c.mockLoading.start = false;
+    render();
+  }
+}
+
+async function submitAnswer(id, idx){
+  const c = companies.find(x => x.id === id);
+  if(!c) return;
+  const ansEl = document.getElementById('ans_' + id + '_' + idx);
+  const answer = ansEl ? ansEl.value.trim() : '';
+  if(!answer){
+    alert('Please type an answer before submitting.');
+    return;
+  }
+  c.mockAnswers[idx] = answer;
+  c.mockLoading[idx] = true;
+  render();
+
+  const prompt = `Act as a rigorous, honest interview coach evaluating a candidate's practice answer.
+
+Interview question: "${c.mockQuestions[idx]}"
+Company context: ${c.name || 'Not specified'}
+Job description context: ${(c.jd || '').substring(0, 1000)}
+
+Candidate's answer: "${answer}"
+
+Evaluate this answer and respond ONLY in this exact format with no extra text before or after:
+
+SCORE: [a single number from 1 to 10]
+MISSING: [1-2 sentences on what was weak, vague, or missing from the answer — be direct and specific, not generic]
+REWRITE: [a stronger 3-4 sentence version of the answer that demonstrates specificity, a clear example structure, and professional confidence — written as if the candidate is speaking]`;
+
+  try{
+    const result = await callClaude(prompt, 700);
+    const scoreMatch = result.match(/SCORE:\s*(\d+)/i);
+    const missingMatch = result.match(/MISSING:\s*([\s\S]*?)(?:REWRITE:|$)/i);
+    const rewriteMatch = result.match(/REWRITE:\s*([\s\S]*)/i);
+
+    c.mockFeedback[idx] = {
+      score: scoreMatch ? parseInt(scoreMatch[1], 10) : 6,
+      missing: missingMatch ? missingMatch[1].trim() : 'Could not parse feedback — please try resubmitting.',
+      rewrite: rewriteMatch ? rewriteMatch[1].trim() : result.trim()
+    };
+    c.mockLoading[idx] = false;
+    render();
+  } catch(err){
+    alert('Error evaluating answer: ' + (err.message || 'please try again.'));
+    c.mockLoading[idx] = false;
+    render();
+  }
+}
+
+// ============================================================================
+// COPY / DOWNLOAD HELPERS
+// ============================================================================
+function copyText(key){
+  const el = document.getElementById('out_' + key);
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    const toast = document.getElementById('copyToast');
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'), 1500);
+  });
+}
+
+function downloadText(key, filename){
+  const el = document.getElementById('out_' + key);
+  if(!el) return;
+  const blob = new Blob([el.textContent], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (filename || 'Interview_Brief').replace(/[^a-z0-9_\-]/gi, '_') + '.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================================
+// INIT
+// ============================================================================
+render();
+</script>
+</body>
+</html>
