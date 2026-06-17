@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Mock Interview — Camera &amp; AI Debrief</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C3D5A; --navy-dk:#0E1A2B; --gold:#B8973A; --gold-lt:#E8D28A;
+    --cream:#F7F4ED; --cream-dk:#EFEAE0; --border:#D8D0BE; --border-strong:#C2B89C;
+    --text:#222A33; --text-muted:#5A6470; --success:#2E7D52; --danger:#C1440E;
+    --surface:#FFFFFF; --font-display:'Cormorant Garamond',serif; --font-body:'DM Sans',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.55}
+  .shell{max-width:880px;margin:0 auto;padding:0 24px 80px}
+  header{background:linear-gradient(135deg,var(--navy-dk),var(--navy));color:#fff;padding:38px 24px 30px}
+  .header-inner{max-width:880px;margin:0 auto}
+  .brand-line{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:8px}
+  h1{font-family:var(--font-display);font-weight:600;font-size:34px;margin:0 0 8px}
+  .sub{color:rgba(255,255,255,.78);font-size:14px;max-width:640px}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px 28px;margin:24px 0}
+  .step-badge{display:inline-block;background:var(--navy);color:#fff;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:5px 11px;border-radius:20px;margin-bottom:14px;font-weight:600}
+  .step-badge.gold{background:var(--gold);color:var(--navy-dk)}
+  h2{font-family:var(--font-display);font-size:23px;font-weight:600;color:var(--navy);margin:0 0 6px}
+  .desc{color:var(--text-muted);font-size:13.5px;margin-bottom:18px;line-height:1.6}
+  label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px}
+  .req{color:var(--danger);font-size:10px;font-weight:600;margin-left:4px}
+  .hint{font-size:11.5px;color:var(--text-muted);margin-bottom:6px}
+  textarea,input[type=text],select{width:100%;border:1px solid var(--border-strong);border-radius:6px;padding:10px 12px;font-family:var(--font-body);font-size:13px;color:var(--text);background:#FCFBF8;resize:vertical}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,151,58,.15)}
+  .field{margin-bottom:16px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.row2{grid-template-columns:1fr}}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;border:none;border-radius:7px;padding:12px 22px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn:hover{background:var(--navy-dk)}
+  .btn:disabled{background:#B8B8B8;cursor:not-allowed;opacity:.6}
+  .btn.gold{background:var(--gold);color:var(--navy-dk)}
+  .btn.gold:hover{background:#A6852E}
+  .btn.ghost{background:transparent;border:1px solid var(--border-strong);color:var(--navy)}
+  .btn.ghost:hover{background:var(--cream-dk)}
+  .btn.danger{background:rgba(193,68,14,.12);border:1px solid rgba(193,68,14,.5);color:#9A3408}
+  .btn.danger:hover{background:rgba(193,68,14,.2)}
+  .btn.small{padding:8px 14px;font-size:12px}
+  .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .output{background:var(--cream-dk);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin-top:18px;white-space:pre-wrap;font-size:13px;line-height:1.65}
+  .output-placeholder{color:var(--text-muted);font-style:italic}
+  .loading{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:13px;padding:14px 0}
+  .spinner{width:16px;height:16px;border:2px solid var(--border-strong);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-box{background:#FBEAEA;border:1px solid #E3B6B6;color:var(--danger);border-radius:6px;padding:12px 14px;font-size:13px;margin-top:12px}
+  .footer-note{text-align:center;color:var(--text-muted);font-size:11.5px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+  .key-banner{background:#FBF0DA;border:1px solid #E3CB8A;border-radius:8px;padding:12px 16px;font-size:12.5px;color:#6B4F12;margin-bottom:20px}
+  .key-banner input{margin-top:8px}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--navy-dk);color:#fff;padding:10px 18px;border-radius:6px;font-size:12.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+
+  .device-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+  @media(max-width:640px){.device-grid{grid-template-columns:1fr}}
+  .device-label{font-size:11px;color:var(--text-muted);margin-bottom:5px}
+  .preview-wrap{position:relative;background:var(--navy-dk);border-radius:8px;overflow:hidden;width:100%;aspect-ratio:16/9;margin-top:14px}
+  .preview-wrap video{width:100%;height:100%;object-fit:cover;display:block}
+  .preview-badge{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(14,26,43,.85);border:1px solid rgba(184,151,58,.35);border-radius:4px;padding:6px 16px;font-size:11px;color:var(--gold-lt);letter-spacing:.08em;white-space:nowrap}
+  .mic-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .mic-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+  .mic-fill{height:100%;background:var(--gold);border-radius:3px;width:0%;transition:width .1s}
+  .preview-ok{margin-top:10px;font-size:12px;color:var(--success);display:none}
+
+  .interview-stage{position:relative;background:var(--navy-dk);border-radius:8px;overflow:hidden;width:100%;aspect-ratio:16/9;max-height:70vh}
+  .interview-stage video{width:100%;height:100%;object-fit:cover;display:block}
+  .rec-indicator{display:none;position:absolute;top:14px;left:14px;background:rgba(193,68,14,.92);color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 10px;border-radius:4px;align-items:center;gap:5px}
+  .rec-dot{width:7px;height:7px;background:#ff4444;border-radius:50%;animation:blink .8s infinite;display:inline-block}
+  @keyframes blink{50%{opacity:.2}}
+  .transcribe-indicator{position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:6px}
+  .transcribe-dot{width:8px;height:8px;background:#ccc;border-radius:50%;display:inline-block}
+  .q-overlay{position:absolute;top:14px;left:50%;transform:translateX(-50%);max-width:80%;text-align:center}
+  .q-num{font-size:11px;color:rgba(232,210,138,.8);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;background:rgba(14,26,43,.78);padding:5px 14px;border-radius:20px;backdrop-filter:blur(4px)}
+  .speaking-indicator{display:none;align-items:center;justify-content:center;gap:6px;background:rgba(14,26,43,.85);border:1px solid rgba(184,151,58,.4);border-radius:6px;padding:8px 16px;backdrop-filter:blur(4px)}
+  .sound-bars{display:flex;align-items:flex-end;gap:3px;height:18px}
+  .sound-bars span{width:3px;background:var(--gold);border-radius:2px;animation:soundBar .8s ease-in-out infinite}
+  .sound-bars span:nth-child(2){animation-delay:.15s}
+  .sound-bars span:nth-child(3){animation-delay:.3s}
+  .sound-bars span:nth-child(4){animation-delay:.45s}
+  .sound-bars span:nth-child(5){animation-delay:.6s}
+  @keyframes soundBar{0%,100%{height:4px}50%{height:18px}}
+  .replay-btn{display:none;margin-top:8px;background:rgba(14,26,43,.75);border:1px solid rgba(184,151,58,.3);border-radius:20px;color:rgba(232,210,138,.75);font-size:10px;letter-spacing:.08em;padding:4px 12px;cursor:pointer;backdrop-filter:blur(4px)}
+  .transcript-overlay{position:absolute;bottom:70px;left:0;right:0;padding:0 16px}
+  .transcript-live{background:rgba(14,26,43,.75);border:1px solid rgba(184,151,58,.2);border-radius:6px;padding:10px 14px;font-size:12px;color:rgba(232,210,138,.88);line-height:1.6;white-space:pre-wrap;font-style:italic;max-height:80px;overflow:hidden;backdrop-filter:blur(4px)}
+  .controls-bar{position:absolute;bottom:0;left:0;right:0;background:rgba(14,26,43,.92);padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;backdrop-filter:blur(8px)}
+  .ctrl-btn{font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.07em;padding:8px 16px;text-transform:uppercase;border-radius:4px;cursor:pointer;border:1px solid transparent}
+  .ctrl-pause{background:rgba(184,151,58,.2);border-color:rgba(184,151,58,.5);color:var(--gold-lt)}
+  .ctrl-retake{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)}
+  .ctrl-next{background:var(--gold);color:var(--navy-dk);font-weight:700}
+  .ctrl-next:disabled{opacity:.4;cursor:not-allowed}
+  .ctrl-end{background:rgba(193,68,14,.18);border-color:rgba(193,68,14,.5);color:#e8a09a}
+
+  .browser-warn{background:rgba(184,151,58,.12);border:1px solid rgba(184,151,58,.45);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#6B4F12}
+
+  .complete-banner{background:#E2F1E8;border:1px solid #9DC9AE;border-radius:6px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .complete-banner .check{color:var(--success);font-size:18px}
+  .section-label{font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--navy);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+  video.playback{width:100%;border-radius:6px;background:var(--navy-dk);max-height:300px}
+  .transcript-box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;font-size:13px;line-height:1.8;white-space:pre-wrap;max-height:300px;overflow-y:auto}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand-line">CareerLaunch AI™ &nbsp;·&nbsp; Standalone Module</div>
+    <h1>Live Mock Interview</h1>
+    <div class="sub">Camera and microphone practice with real-time transcription and a comprehensive AI debrief covering content, delivery, and presence — for time-sensitive interview prep.</div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <div class="panel" id="panel-setup">
+    <span class="step-badge">Step 1</span>
+    <h2>Interview Setup</h2>
+    <div class="desc">Tell us about the role. Questions are generated specifically for this company and job — not generic prompts.</div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Company Name <span class="req">Required</span></label>
+        <input type="text" id="setCompany" placeholder="e.g. Meridian Health Systems">
+      </div>
+      <div class="field">
+        <label>Role / Title <span class="req">Required</span></label>
+        <input type="text" id="setRole" placeholder="e.g. Operations Supervisor">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Job Description <span class="req">Required</span></label>
+      <div class="hint">Paste the full posting if available, or describe the role in a few sentences.</div>
+      <textarea id="setJD" rows="5" placeholder="Paste the job description here..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Custom Questions (Optional)</label>
+      <div class="hint">One per line. Leave blank to auto-generate from the job description.</div>
+      <textarea id="setCustomQs" rows="3" placeholder="e.g.&#10;Walk me through how you handled a staffing shortage.&#10;What is your approach to conflict with a peer?"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn gold" onclick="goToCameraSetup()">Continue to Camera Setup →</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-camera" style="display:none">
+    <span class="step-badge">Step 2</span>
+    <h2>Camera &amp; Microphone Check</h2>
+    <div class="desc">Select your devices and preview before recording. This is not recorded — it's just a check.</div>
+
+    <div id="browserWarnSpeech" class="browser-warn" style="display:none">
+      ⚠ Live transcription requires Google Chrome or Microsoft Edge. Camera recording and the AI debrief will still work in your current browser.
+    </div>
+    <div id="browserWarnIOS" class="browser-warn" style="display:none">
+      ⚠ On iPhone/iPad, the interviewer voice may not play automatically. Tap the screen once before starting to enable audio, or use a laptop for the best experience.
+    </div>
+
+    <div class="device-grid">
+      <div>
+        <div class="device-label">Camera</div>
+        <select id="cameraSelect"><option value="">Loading...</option></select>
+      </div>
+      <div>
+        <div class="device-label">Microphone</div>
+        <select id="micSelect"><option value="">Loading...</option></select>
+      </div>
+    </div>
+    <button class="btn ghost small" onclick="previewCamera()">▶ Preview Camera &amp; Mic</button>
+
+    <div class="preview-wrap" id="previewWrap" style="display:none">
+      <video id="previewVideo" autoplay muted playsinline></video>
+      <div class="preview-badge">PREVIEW — Not Recording</div>
+    </div>
+    <div class="mic-row" id="micRow" style="display:none">
+      <div style="font-size:11px;color:var(--text-muted);white-space:nowrap">Mic level</div>
+      <div class="mic-track"><div class="mic-fill" id="micFill"></div></div>
+    </div>
+    <div class="preview-ok" id="previewOk">✓ Camera and mic look good. You can start the interview.</div>
+    <div id="cameraError"></div>
+
+    <div class="actions">
+      <button class="btn gold" id="startInterviewBtn" onclick="startInterview()" disabled>● Start Recording — Begin Interview</button>
+      <button class="btn ghost" onclick="backToSetup()">← Back</button>
+    </div>
+    <div class="hint" id="startHint" style="margin-top:8px">Preview your camera first to enable the Start button.</div>
+  </div>
+
+  <div class="panel" id="panel-active" style="display:none">
+    <span class="step-badge gold">Live</span>
+    <h2>Mock Interview in Progress</h2>
+    <div class="interview-stage">
+      <video id="liveVideo" autoplay muted playsinline></video>
+      <div class="rec-indicator" id="recIndicator"><span class="rec-dot"></span> REC</div>
+      <div class="transcribe-indicator"><span class="transcribe-dot" id="transcribeDot"></span><span style="font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.08em;text-transform:uppercase">Transcribing</span></div>
+      <div class="q-overlay">
+        <div class="q-num" id="qNum">Question 1</div>
+        <div class="speaking-indicator" id="speakingIndicator">
+          <div class="sound-bars"><span></span><span></span><span></span><span></span><span></span></div>
+          <span style="font-size:11px;color:var(--gold-lt);letter-spacing:.08em">Interviewer speaking...</span>
+        </div>
+        <button class="replay-btn" id="replayBtn" onclick="replayQuestion()">↺ Replay Question</button>
+      </div>
+      <div class="transcript-overlay">
+        <div class="transcript-live" id="transcriptLive">Your transcribed answers will appear here as you speak...</div>
+      </div>
+      <div class="controls-bar">
+        <button class="ctrl-btn ctrl-pause" id="pauseBtn" onclick="pauseResume()">⏸ Pause</button>
+        <button class="ctrl-btn ctrl-retake" onclick="retakeAnswer()">↺ Retake Answer</button>
+        <button class="ctrl-btn ctrl-next" id="nextBtn" onclick="nextQuestion()" disabled>Next Question →</button>
+        <button class="ctrl-btn ctrl-end" onclick="endInterview()">■ End Interview</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-results" style="display:none">
+    <span class="step-badge gold">Complete</span>
+    <h2>Interview Complete</h2>
+    <div class="complete-banner">
+      <div class="check">✓</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--success);margin-bottom:2px">Recording and transcript ready</div>
+        <div style="font-size:11px;color:var(--text-muted)">Generate your AI debrief below — it analyzes your transcript and captured frames together.</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div class="section-label">Playback</div>
+      <video id="playbackVideo" class="playback" controls></video>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div class="section-label">Full Transcript <button class="btn ghost small" onclick="copyTranscript()">⎘ Copy</button></div>
+      <div class="transcript-box" id="transcriptFull"></div>
+    </div>
+
+    <div>
+      <h2 style="font-size:20px">AI Performance Debrief</h2>
+      <div class="desc">One comprehensive debrief covering content, delivery, and body language — based on your transcript and captured video frames.</div>
+      <button class="btn gold" id="debriefBtn" onclick="generateDebrief()">Generate AI Debrief</button>
+      <div id="debriefError"></div>
+      <div id="debriefOutputWrap" style="display:none;margin-top:16px">
+        <div class="section-label">Performance Debrief <span style="display:flex;gap:6px"><button class="btn ghost small" onclick="copyDebrief()">⎘ Copy</button><button class="btn ghost small" onclick="downloadDebrief()">↓ Download</button></span></div>
+        <div class="output" id="debriefText"></div>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:24px">
+      <button class="btn ghost" onclick="startOver()">↺ Practice Again</button>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    CareerLaunch AI™ &nbsp;·&nbsp; Live Mock Interview module &nbsp;·&nbsp; Standalone version for time-sensitive prep &nbsp;·&nbsp; Confidential
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let setup = { company:'', role:'', jd:'', customQs:'' };
+let previewStream = null;
+let micAnalyser = null;
+let micInterval = null;
+let ttsVoice = null;
+
+let mockState = {
+  stream: null,
+  mediaRecorder: null,
+  recordedChunks: [],
+  recognition: null,
+  transcript: [],
+  currentQuestion: 0,
+  questions: [],
+  capturedFrames: [],
+  isRecording: false,
+  frameCaptureInterval: null
+};
+
+function showToast(msg, duration){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), duration || 1800);
+}
+
+// ============================================================================
+// CLAUDE API CALL — via Cloudflare Worker proxy (same as ExecEdge AI™)
+// No API key needed in the browser; the Worker holds the key server-side.
+// Accepts either a plain string prompt or an array of content blocks (for
+// multimodal calls that include captured video frame images).
+// ============================================================================
+async function callClaude(content, maxTokens){
+  const resp = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens || 4000,
+      stream: true,
+      messages: [{ role: 'user', content: content }]
+    })
+  });
+  if(!resp.ok){
+    const errBody = await resp.json().catch(()=>({}));
+    throw new Error((errBody.error && errBody.error.message) || 'HTTP ' + resp.status);
+  }
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  while(true){
+    const result = await reader.read();
+    if(result.done) break;
+    buffer += decoder.decode(result.value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for(const line of lines){
+      if(!line.startsWith('data: ')) continue;
+      const data = line.slice(6);
+      if(data === '[DONE]') break;
+      try{
+        const parsed = JSON.parse(data);
+        if(parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text){
+          fullText += parsed.delta.text;
+        }
+      } catch(e){ /* skip malformed SSE line */ }
+    }
+  }
+  return fullText;
+}
+
+function goToCameraSetup(){
+  setup.company = document.getElementById('setCompany').value.trim();
+  setup.role = document.getElementById('setRole').value.trim();
+  setup.jd = document.getElementById('setJD').value.trim();
+  setup.customQs = document.getElementById('setCustomQs').value.trim();
+
+  if(!setup.company || !setup.role || !setup.jd){
+    showToast('Please fill in Company, Role, and Job Description.');
+    return;
+  }
+
+  document.getElementById('panel-setup').style.display = 'none';
+  document.getElementById('panel-camera').style.display = 'block';
+
+  const hasSpeech = ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if(!hasSpeech) document.getElementById('browserWarnSpeech').style.display = 'block';
+  if(isIOS) document.getElementById('browserWarnIOS').style.display = 'block';
+
+  populateCameraList();
+  initTTSVoice();
+}
+
+function backToSetup(){
+  if(previewStream){ previewStream.getTracks().forEach(t=>t.stop()); previewStream = null; }
+  if(micInterval){ clearInterval(micInterval); micInterval = null; }
+  document.getElementById('panel-camera').style.display = 'none';
+  document.getElementById('panel-setup').style.display = 'block';
+}
+
+async function populateCameraList(){
+  const camSelect = document.getElementById('cameraSelect');
+  const micSelect = document.getElementById('micSelect');
+  try{
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter(d => d.kind === 'videoinput');
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    camSelect.innerHTML = cameras.length
+      ? cameras.map((c,i)=>`<option value="${c.deviceId}">${c.label || 'Camera '+(i+1)}</option>`).join('')
+      : '<option value="">Default camera</option>';
+    micSelect.innerHTML = mics.length
+      ? mics.map((m,i)=>`<option value="${m.deviceId}">${m.label || 'Microphone '+(i+1)}</option>`).join('')
+      : '<option value="">Default microphone</option>';
+  } catch(e){
+    camSelect.innerHTML = '<option value="">Default camera</option>';
+    micSelect.innerHTML = '<option value="">Default microphone</option>';
+  }
+}
+
+async function previewCamera(){
+  await populateCameraList();
+  const camId = document.getElementById('cameraSelect').value;
+  const micId = document.getElementById('micSelect').value;
+
+  if(previewStream){ previewStream.getTracks().forEach(t=>t.stop()); previewStream = null; }
+  if(micInterval){ clearInterval(micInterval); micInterval = null; }
+
+  const videoConstraints = camId ? {deviceId:{exact:camId}} : true;
+  const audioConstraints = micId ? {deviceId:{exact:micId}} : true;
+
+  try{
+    previewStream = await navigator.mediaDevices.getUserMedia({video: videoConstraints, audio: audioConstraints});
+    document.getElementById('previewVideo').srcObject = previewStream;
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('micRow').style.display = 'flex';
+    document.getElementById('cameraError').innerHTML = '';
+
+    try{
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(previewStream);
+      micAnalyser = audioCtx.createAnalyser();
+      micAnalyser.fftSize = 256;
+      source.connect(micAnalyser);
+      const dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+      micInterval = setInterval(()=>{
+        micAnalyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a,b)=>a+b,0) / dataArray.length;
+        const pct = Math.min(100, Math.round(avg*2));
+        const fill = document.getElementById('micFill');
+        fill.style.width = pct + '%';
+        fill.style.background = pct>60 ? '#2D6A4F' : pct>20 ? 'var(--gold)' : 'var(--border-strong)';
+      }, 100);
+    } catch(e){ console.warn('Mic monitoring failed', e); }
+
+    setTimeout(()=>{
+      const btn = document.getElementById('startInterviewBtn');
+      btn.disabled = false;
+      document.getElementById('previewOk').style.display = 'block';
+      document.getElementById('startHint').style.display = 'none';
+    }, 1500);
+
+  } catch(e){
+    document.getElementById('previewWrap').style.display = 'none';
+    document.getElementById('cameraError').innerHTML = `<div class="error-box">Camera/mic access failed: ${e.message}. Please allow access and try again.</div>`;
+  }
+}
+
+function initTTSVoice(){
+  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  const preferred = ['Google US English','Microsoft David','Microsoft Mark','Alex','Samantha','Karen','Daniel','Moira'];
+  for(const name of preferred){
+    const v = voices.find(v=>v.name===name);
+    if(v){ ttsVoice = v; return; }
+  }
+  const enUS = voices.find(v=>v.lang==='en-US');
+  if(enUS) ttsVoice = enUS;
+}
+if(window.speechSynthesis){ window.speechSynthesis.onvoiceschanged = initTTSVoice; initTTSVoice(); }
+
+function speakQuestion(text, onDone){
+  if(!window.speechSynthesis){ if(onDone) onDone(); return; }
+  if(window.speechSynthesis.paused || window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+  setTimeout(()=>{
+    const utt = new SpeechSynthesisUtterance(text);
+    if(ttsVoice) utt.voice = ttsVoice;
+    utt.rate = 0.92; utt.pitch = 1.0; utt.volume = 1.0;
+    const speakingEl = document.getElementById('speakingIndicator');
+    speakingEl.style.display = 'flex';
+    utt.onend = ()=>{ speakingEl.style.display='none'; if(onDone) onDone(); };
+    utt.onerror = ()=>{ speakingEl.style.display='none'; if(onDone) onDone(); };
+    window.speechSynthesis.speak(utt);
+  }, 500);
+}
+
+function replayQuestion(){
+  const q = mockState.questions[mockState.currentQuestion];
+  if(q) speakQuestion(q);
+}
+
+async function generateQuestions(){
+  if(setup.customQs){
+    const customList = setup.customQs.split('\n').map(q=>q.trim()).filter(q=>q.length>8);
+    if(customList.length >= 5) return customList.slice(0,8);
+  }
+  const prompt = `Generate exactly 7 realistic interview questions for a candidate interviewing for this role:
+
+Company: ${setup.company}
+Role: ${setup.role}
+Job Description: ${setup.jd}
+
+Sequence:
+1. Company-specific question about their situation or priorities
+2. Competency-based question (specific scenario)
+3. Competency-based question (different competency)
+4. Role-specific technical/functional question from the job description
+5. A question that probes a potential gap or challenge in a typical candidate's background
+6. A behavioral question about working with others or a difficult situation
+7. A closing question about the candidate's approach to their first 90 days
+
+Return ONLY the 7 questions, one per line, numbered 1-7, no preamble, no extra text.`;
+
+  try{
+    const result = await callClaude(prompt, 1000);
+    const lines = result.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+    let qs = lines.map(l=>l.replace(/^\d+[\.\)]\s*/,'').trim()).filter(l=>l.length>5).slice(0,7);
+    if(setup.customQs){
+      const customList = setup.customQs.split('\n').map(q=>q.trim()).filter(q=>q.length>8);
+      qs = qs.concat(customList);
+    }
+    return qs.length ? qs : fallbackQuestions();
+  } catch(e){
+    showToast('Could not generate custom questions — using a general set instead.');
+    return fallbackQuestions();
+  }
+}
+
+function fallbackQuestions(){
+  return [
+    'Tell me about yourself and what brings you to this opportunity.',
+    'Walk me through a time you solved a difficult problem at work. What was the outcome?',
+    'Describe a situation where you had to make a decision with incomplete information.',
+    'How do you build trust with a new team or manager quickly?',
+    'Where do you see the biggest opportunity in this role in your first 90 days?',
+    'Tell me about a time you had to navigate disagreement with a colleague.',
+    'What questions do you have for us?'
+  ];
+}
+
+async function startInterview(){
+  const btn = document.getElementById('startInterviewBtn');
+  btn.disabled = true;
+  btn.textContent = 'Preparing questions...';
+
+  mockState.questions = await generateQuestions();
+
+  btn.textContent = 'Starting camera...';
+
+  try{
+    if(previewStream){ previewStream.getTracks().forEach(t=>t.stop()); previewStream = null; }
+    if(micInterval){ clearInterval(micInterval); micInterval = null; }
+
+    const camId = document.getElementById('cameraSelect').value;
+    const micId = document.getElementById('micSelect').value;
+    const videoConstraints = camId ? {deviceId:{exact:camId}} : {facingMode:'user'};
+    const audioConstraints = micId ? {deviceId:{exact:micId}} : true;
+
+    mockState.stream = await navigator.mediaDevices.getUserMedia({video: videoConstraints, audio: audioConstraints});
+    document.getElementById('liveVideo').srcObject = mockState.stream;
+
+    mockState.recordedChunks = [];
+    mockState.capturedFrames = [];
+    mockState.transcript = [];
+    mockState.currentQuestion = 0;
+
+    let mimeType = 'video/webm';
+    if(typeof MediaRecorder === 'undefined'){ mimeType = 'video/mp4'; }
+    else if(MediaRecorder.isTypeSupported('video/webm;codecs=vp9')){ mimeType = 'video/webm;codecs=vp9'; }
+    else if(MediaRecorder.isTypeSupported('video/mp4')){ mimeType = 'video/mp4'; }
+
+    let recorderOptions = {};
+    try{ recorderOptions = {mimeType}; } catch(e){ recorderOptions = {}; }
+
+    mockState.mediaRecorder = new MediaRecorder(mockState.stream, recorderOptions);
+    mockState.mediaRecorder.ondataavailable = (e)=>{ if(e.data && e.data.size>0) mockState.recordedChunks.push(e.data); };
+    mockState.mediaRecorder.start(1000);
+    mockState.isRecording = true;
+
+    document.getElementById('recIndicator').style.display = 'flex';
+    initTTSVoice();
+
+    if('webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      mockState.recognition = new SR();
+      mockState.recognition.continuous = true;
+      mockState.recognition.interimResults = true;
+      mockState.recognition.lang = 'en-US';
+      let currentInterim = '';
+      mockState.recognition.onresult = (e)=>{
+        let interim='', final='';
+        for(let i=e.resultIndex;i<e.results.length;i++){
+          if(e.results[i].isFinal) final += e.results[i][0].transcript;
+          else interim += e.results[i][0].transcript;
+        }
+        if(final){ mockState.transcript.push(final); currentInterim=''; }
+        else currentInterim = interim;
+        document.getElementById('transcriptLive').textContent = mockState.transcript.join(' ') + (currentInterim ? ' '+currentInterim : '');
+        document.getElementById('transcribeDot').style.background = '#2ecc71';
+      };
+      mockState.recognition.onerror = ()=>{ document.getElementById('transcribeDot').style.background = '#e74c3c'; };
+      mockState.recognition.start();
+    } else {
+      const liveEl = document.getElementById('transcriptLive');
+      liveEl.textContent = 'Live transcription is not available in this browser. Use Chrome or Edge for transcription. Your recording will still be saved for AI analysis.';
+      document.getElementById('transcribeDot').style.background = '#8A6E26';
+    }
+
+    document.getElementById('panel-camera').style.display = 'none';
+    document.getElementById('panel-active').style.display = 'block';
+
+    mockState.frameCaptureInterval = setInterval(captureFrame, 30000);
+    setTimeout(captureFrame, 3000);
+
+    updateQuestionDisplay();
+
+  } catch(e){
+    btn.disabled = false;
+    btn.textContent = '● Start Recording — Begin Interview';
+    document.getElementById('cameraError').innerHTML = `<div class="error-box">Camera access denied or not available: ${e.message}. Please allow camera and microphone access and try again.</div>`;
+  }
+}
+
+function updateQuestionDisplay(){
+  const total = mockState.questions.length;
+  const current = mockState.currentQuestion;
+  const questionText = mockState.questions[current];
+
+  document.getElementById('qNum').textContent = `Question ${current+1} of ${total}`;
+  document.getElementById('replayBtn').style.display = 'none';
+
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.disabled = true;
+  nextBtn.style.opacity = '0.4';
+  if(current >= total - 1){
+    nextBtn.textContent = 'End Interview';
+    nextBtn.onclick = endInterview;
+  } else {
+    nextBtn.textContent = 'Next Question →';
+    nextBtn.onclick = nextQuestion;
+  }
+
+  mockState.transcript.push(`\n[Question ${current+1}: ${questionText}]\n`);
+  document.getElementById('transcriptLive').textContent = mockState.transcript.join(' ');
+
+  captureFrame();
+
+  setTimeout(()=>{
+    speakQuestion(questionText, ()=>{
+      setTimeout(()=>{
+        nextBtn.disabled = false;
+        nextBtn.style.opacity = '1';
+        document.getElementById('replayBtn').style.display = 'block';
+      }, 500);
+    });
+  }, current === 0 ? 500 : 0);
+}
+
+function nextQuestion(){
+  mockState.currentQuestion++;
+  if(mockState.currentQuestion >= mockState.questions.length) endInterview();
+  else updateQuestionDisplay();
+}
+
+function retakeAnswer(){
+  mockState.transcript.push('[RETAKE — previous answer deleted]');
+  document.getElementById('transcriptLive').textContent = mockState.transcript.join(' ');
+  showToast('Last answer marked for retake.');
+}
+
+function pauseResume(){
+  const btn = document.getElementById('pauseBtn');
+  if(!mockState.mediaRecorder) return;
+  if(mockState.mediaRecorder.state === 'recording'){
+    mockState.mediaRecorder.pause();
+    if(mockState.recognition){ try{ mockState.recognition.stop(); }catch(e){} }
+    btn.textContent = '▶ Resume';
+    document.getElementById('recIndicator').style.opacity = '0.4';
+  } else if(mockState.mediaRecorder.state === 'paused'){
+    mockState.mediaRecorder.resume();
+    if(mockState.recognition){ try{ mockState.recognition.start(); }catch(e){} }
+    btn.textContent = '⏸ Pause';
+    document.getElementById('recIndicator').style.opacity = '1';
+  }
+}
+
+function captureFrame(){
+  const video = document.getElementById('liveVideo');
+  if(!video || !mockState.isRecording) return;
+  try{
+    const canvas = document.createElement('canvas');
+    canvas.width = 320; canvas.height = 180;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataURL = canvas.toDataURL('image/jpeg', 0.7);
+    const qIdx = mockState.currentQuestion;
+    mockState.capturedFrames.push({
+      dataURL, questionIndex: qIdx,
+      questionText: mockState.questions[qIdx] || 'General',
+      timestamp: new Date().toISOString()
+    });
+  } catch(e){ console.warn('Frame capture failed', e); }
+}
+
+function endInterview(){
+  mockState.isRecording = false;
+  if(mockState.frameCaptureInterval) clearInterval(mockState.frameCaptureInterval);
+  captureFrame();
+  if(mockState.recognition){ try{ mockState.recognition.stop(); }catch(e){} }
+  if(mockState.mediaRecorder && mockState.mediaRecorder.state !== 'inactive') mockState.mediaRecorder.stop();
+
+  setTimeout(()=>{
+    if(mockState.recordedChunks.length > 0){
+      const blob = new Blob(mockState.recordedChunks, {type:'video/webm'});
+      const url = URL.createObjectURL(blob);
+      const playback = document.getElementById('playbackVideo');
+      playback.src = url;
+      playback.controls = true;
+    }
+    if(mockState.stream) mockState.stream.getTracks().forEach(t=>t.stop());
+    document.getElementById('recIndicator').style.display = 'none';
+
+    const fullTranscript = mockState.transcript.join(' ').replace(/\[Question/g,'\n\n[Question').trim();
+    document.getElementById('transcriptFull').textContent = fullTranscript || 'No transcript captured. Please ensure microphone permissions were granted.';
+
+    document.getElementById('panel-active').style.display = 'none';
+    document.getElementById('panel-results').style.display = 'block';
+  }, 1200);
+}
+
+async function generateDebrief(){
+  const btn = document.getElementById('debriefBtn');
+  const wrap = document.getElementById('debriefOutputWrap');
+  const textEl = document.getElementById('debriefText');
+  const errEl = document.getElementById('debriefError');
+
+  btn.disabled = true;
+  btn.textContent = 'Analyzing your performance...';
+  errEl.innerHTML = '';
+  wrap.style.display = 'block';
+  textEl.innerHTML = '<div class="loading"><div class="spinner"></div> Reviewing your transcript and captured frames...</div>';
+
+  const transcript = document.getElementById('transcriptFull').textContent || 'No transcript available.';
+
+  const userContent = [];
+  if(mockState.capturedFrames.length > 0){
+    const frameStep = Math.max(1, Math.floor(mockState.capturedFrames.length / 4));
+    const selected = [];
+    for(let i=0; i<mockState.capturedFrames.length && selected.length<4; i+=frameStep){
+      selected.push(mockState.capturedFrames[i]);
+    }
+    selected.forEach((frame, idx)=>{
+      const base64 = frame.dataURL.split(',')[1];
+      userContent.push({ type:'image', source:{ type:'base64', media_type:'image/jpeg', data: base64 } });
+      userContent.push({ type:'text', text: `Frame ${idx+1} captured during: ${frame.questionText}` });
+    });
+  }
+
+  const promptText = `Act as a professional interview coach. The candidate just completed a mock interview practice session for the role of ${setup.role} at ${setup.company}. Below is the full transcript and video frames captured during the session.
+
+FULL INTERVIEW TRANSCRIPT:
+${transcript}
+
+JOB DESCRIPTION CONTEXT:
+${setup.jd.substring(0,1500)}
+
+Produce a comprehensive performance debrief with these sections:
+
+SECTION 1 — CONTENT ANALYSIS
+For each question answered: what landed, what was missing, what should be added or removed. Overall narrative strength and whether answers demonstrate the professionalism and specificity expected for this role.
+
+SECTION 2 — DELIVERY ANALYSIS
+Based on the transcript: filler words and frequency, answer length (too short/too long), structure (did answers follow a clear structure), confidence indicators in language, moments where delivery was strongest and weakest.
+
+SECTION 3 — BODY LANGUAGE & PRESENCE
+Based on the video frames: eye contact and camera engagement, posture and composure, facial expression, overall professional presence. Be specific about what you observe in the images.
+
+SECTION 4 — TOP 3 PRIORITIES
+The three most important things to work on before the real interview, in priority order. Be direct and specific.
+
+SECTION 5 — WHAT TO DO BEFORE THE INTERVIEW
+Three concrete actions to take in the next 24-48 hours.
+
+SECTION 6 — STRONGER ANSWER REWRITES
+For every answer that was incomplete, vague, or weak: write a stronger 3-4 sentence version demonstrating specificity, a clear example, and professional confidence. Label each as Q[number] STRONGER VERSION: [rewritten answer]. This is the most actionable section.
+
+Be direct, specific, and honest. This person has a real interview within 48 hours. Generic feedback is not useful to them.`;
+
+  userContent.push({ type:'text', text: promptText });
+
+  try{
+    const result = await callClaude(userContent, 4000);
+    textEl.textContent = result;
+    btn.textContent = '✓ Debrief Generated';
+  } catch(e){
+    errEl.innerHTML = `<div class="error-box">${e.message}</div>`;
+    textEl.innerHTML = '<span class="output-placeholder">Debrief generation failed. Please try again.</span>';
+    btn.disabled = false;
+    btn.textContent = 'Generate AI Debrief';
+  }
+}
+
+function copyTranscript(){
+  const el = document.getElementById('transcriptFull');
+  navigator.clipboard.writeText(el.textContent).then(()=>showToast('✓ Transcript copied'));
+}
+
+function copyDebrief(){
+  const el = document.getElementById('debriefText');
+  const text = el.textContent.trim();
+  if(!text){ showToast('No debrief to copy yet.'); return; }
+  navigator.clipboard.writeText(text).then(()=>showToast('✓ Debrief copied to clipboard'));
+}
+
+function downloadDebrief(){
+  const el = document.getElementById('debriefText');
+  const text = el.textContent.trim();
+  if(!text){ showToast('No debrief to download yet.'); return; }
+  const safeName = (setup.company || 'Interview').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,30);
+  const title = `AI Performance Debrief — ${setup.company} — ${setup.role} — ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}`;
+  const html = `<html><head><meta charset="utf-8"><title>${title}</title></head><body><h2>${title}</h2><pre style="font-family:Calibri,sans-serif;white-space:pre-wrap;font-size:12pt">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre></body></html>`;
+  const blob = new Blob([html], {type:'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `AI_Performance_Debrief_${safeName}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✓ Downloaded debrief');
+}
+
+function startOver(){
+  document.getElementById('panel-results').style.display = 'none';
+  document.getElementById('panel-setup').style.display = 'block';
+  document.getElementById('debriefOutputWrap').style.display = 'none';
+  document.getElementById('debriefText').textContent = '';
+  document.getElementById('debriefBtn').disabled = false;
+  document.getElementById('debriefBtn').textContent = 'Generate AI Debrief';
+  mockState = { stream:null, mediaRecorder:null, recordedChunks:[], recognition:null, transcript:[], currentQuestion:0, questions:[], capturedFrames:[], isRecording:false, frameCaptureInterval:null };
+}
+</script>
+</body>
+</html>
