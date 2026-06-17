@@ -85,12 +85,6 @@
 
 <div class="shell">
 
-  <div class="key-banner" id="keyBanner">
-    <strong>One-time setup:</strong> This tool calls the Claude API directly from your browser. Paste your Anthropic API key below — it stays in your browser and is never sent anywhere except Anthropic's API.
-    <input type="text" id="apiKeyInput" placeholder="sk-ant-..." style="margin-top:8px">
-    <div style="margin-top:8px"><button class="btn small" onclick="saveApiKey()">Save Key</button> <span id="keyStatus" style="font-size:12px;margin-left:8px"></span></div>
-  </div>
-
   <!-- ===================== COMPANY TABS ===================== -->
   <div class="tabs" id="companyTabs"></div>
   <div id="companyPanels"></div>
@@ -119,51 +113,49 @@ let companies = [
     mockStarted: false, mockQuestions: [], mockAnswers: {}, mockFeedback: {}, mockLoading: {}, mockError: '' }
 ];
 let activeCompany = 'c1';
-let apiKey = localStorage.getItem('ii_api_key') || '';
 
 // ============================================================================
-// API KEY HANDLING
-// ============================================================================
-function saveApiKey(){
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if(!val){ document.getElementById('keyStatus').textContent = 'Please paste a key.'; return; }
-  apiKey = val;
-  localStorage.setItem('ii_api_key', val);
-  document.getElementById('keyStatus').textContent = '✓ Saved';
-  document.getElementById('keyStatus').style.color = 'var(--success)';
-  setTimeout(()=>{ document.getElementById('keyBanner').style.display = 'none'; }, 900);
-}
-if(apiKey){ document.getElementById('keyBanner').style.display = 'none'; }
-
-// ============================================================================
-// CLAUDE API CALL
+// CLAUDE API CALL — via Cloudflare Worker proxy (same as ExecEdge AI™)
+// No API key needed in the browser; the Worker holds the key server-side.
 // ============================================================================
 async function callClaude(promptText, maxTokens){
-  if(!apiKey){
-    document.getElementById('keyBanner').style.display = 'block';
-    throw new Error('Please enter and save your Anthropic API key above first.');
-  }
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+  const resp = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
       max_tokens: maxTokens || 4000,
+      stream: true,
       messages: [{ role: 'user', content: promptText }]
     })
   });
   if(!resp.ok){
-    const errBody = await resp.text();
-    throw new Error('API error (' + resp.status + '): ' + errBody.substring(0,200));
+    const errBody = await resp.json().catch(()=>({}));
+    throw new Error((errBody.error && errBody.error.message) || 'HTTP ' + resp.status);
   }
-  const data = await resp.json();
-  const textBlocks = data.content.filter(b => b.type === 'text').map(b => b.text);
-  return textBlocks.join('\n');
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  while(true){
+    const result = await reader.read();
+    if(result.done) break;
+    buffer += decoder.decode(result.value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for(const line of lines){
+      if(!line.startsWith('data: ')) continue;
+      const data = line.slice(6);
+      if(data === '[DONE]') break;
+      try{
+        const parsed = JSON.parse(data);
+        if(parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text){
+          fullText += parsed.delta.text;
+        }
+      } catch(e){ /* skip malformed SSE line */ }
+    }
+  }
+  return fullText;
 }
 
 // ============================================================================
