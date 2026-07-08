@@ -520,7 +520,7 @@ async function loadCloudData() {
       'output_0':'0','output_0.75':'0.75','output_0b':'0b','output_0c':'0c',
       'output_0.5a':'0.5a','output_0.5b':'0.5b','output_1':'1','output_2':'2',
       'output_2.5':'2.5','output_6h':'6h','output_3a':'3a','output_3b':'3b','output_4a':'4a','output_5a':'5a','output_4b':'4b',
-      'output_6a':'6a','output_6b':'6b','output_6c':'6c','output_6d':'6d','output_6e':'6e',
+      'output_6a':'6a','output_6b':'6b','output_6c':'6c','output_6d':'6d','output_6e':'6e','output_6f':'6f','output_6g':'6g',
       // Individual deliverable keys saved by ☁ Save buttons
       'a0_career_capital_summary':'career_capital_summary',
       'a0_accomplishment_bank':'accomplishment_bank',
@@ -603,7 +603,7 @@ async function loadCloudData() {
       });
       // Mark agents as completed if we have their outputs
       if (!STATE.completedAgents) STATE.completedAgents = [];
-      var agentKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b'];
+      var agentKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b','6f','6g'];
       agentKeys.forEach(function(k) {
         if (STATE.savedOutputs && STATE.savedOutputs[k] &&
             STATE.completedAgents.indexOf(k) === -1) {
@@ -779,7 +779,7 @@ function startApp() {
   // Navigate to last page client was on
   var targetAgent = '0';
   if (STATE.assessmentResult) {
-    var validKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b','dashboard'];
+    var validKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b','6f','6g','dashboard'];
     var saved = STATE.currentAgent;
     if (saved && validKeys.indexOf(saved) > -1) {
       targetAgent = saved;
@@ -909,7 +909,7 @@ function renderAgent0() {
     }
     html += '<div class="input-hint">'+inp.hint+'</div><textarea id="inp_0_'+inp.id+'" rows="'+inp.rows+'" onchange="autoSaveInput(\'0\',\''+inp.id+'\')" onblur="autoSaveInput(\'0\',\''+inp.id+'\')">'+saved+'</textarea></div>';
   });
-  html += '<button class="btn-generate" id="btnGen_0" onclick="generateAgent0()"><span>Generate Career Capital Assessment</span></button></div></div>';
+  html += '<button class="btn-generate gold" id="btnGen_0" onclick="generateAgent0()"><span>Generate Career Capital Assessment</span></button></div></div>';
   html += '<div class="divider-gold"></div>';
   // Restore interpretation guide if previously generated
   if (isDone && STATE.interpretationGuide) {
@@ -1091,6 +1091,7 @@ function renderAgent0C() {
   html += '<div class="input-section"><div class="input-label">Top 3 Value Propositions</div><div class="input-hint">The three most powerful things you bring to an organization.</div><textarea id="inp_0c_value" rows="4" onchange="autoSaveInput(\'0c\',\'value\')" onblur="autoSaveInput(\'0c\',\'value\')">'+escHtml((STATE.savedInputs||{})['0c_value']||'')+'</textarea></div>';
   html += '<div class="input-section"><div class="input-label">LinkedIn Audience Priority</div><div class="input-hint"><strong>Executive Recruiters</strong>, <strong>Board Members</strong>, <strong>PE/VC Investors</strong>, <strong>C-Suite Peers</strong>, or <strong>All equally</strong>.</div><textarea id="inp_0c_audience" rows="1" onchange="autoSaveInput(\'0c\',\'audience\')" onblur="autoSaveInput(\'0c\',\'audience\')">'+escHtml((STATE.savedInputs||{})['0c_audience']||'All equally')+'</textarea></div>';
   html += '<div class="input-section"><div class="input-label">Featured Section Content (Optional)</div><div class="input-hint">Articles, posts, media coverage, or external links to feature.</div><textarea id="inp_0c_featured" rows="3" onchange="autoSaveInput(\'0c\',\'featured\')" onblur="autoSaveInput(\'0c\',\'featured\')">'+escHtml((STATE.savedInputs||{})['0c_featured']||'')+'</textarea></div>';
+  html += '<div class="input-section" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="input-label">Resume Override <span style="font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0">(Optional — use if you hit a context or length error)</span></div><div class="input-hint">If generation fails, paste a condensed 1–2 page resume here. This overrides the auto-loaded resume for this agent only and saves automatically.</div><textarea id="inp_0c_resumeOverride" rows="5" placeholder="Paste a shorter resume here only if needed..." onchange="autoSaveInput(\'0c\',\'resumeOverride\')" onblur="autoSaveInput(\'0c\',\'resumeOverride\')">'+escHtml((STATE.savedInputs||{})['0c_resumeOverride']||'')+'</textarea></div>';
   html += '<button class="btn-generate gold" id="btnGen_0c" onclick="generateAgent0C()" '+((resume||optimizedResume)?'':'disabled')+'><span>Generate Complete LinkedIn Profile</span></button>';
   html += '<div class="divider-gold"></div>';
   html += '<div class="output-section"><div class="output-header"><div class="output-label">Agent 4 Output — Complete LinkedIn Profile</div><div class="output-actions"><button class="btn-action" onclick="copyOutput(\'0c\')">⎘ Copy</button><button class="btn-action" onclick="dlOutput(\'0c\',\'Agent_0C_LinkedIn_Profile\')">↓ Download .doc</button><button class="btn-action" onclick="saveOutputToCloud(\'0c\')" title="Save to cloud">☁ Save</button></div></div>';
@@ -2122,7 +2123,7 @@ function renderAgent3A() {
     html += '<div class="input-hint">'+inp.hint+'</div><textarea id="inp_3a_'+inp.id+'" rows="'+inp.rows+'" data-agent="3a" data-field="'+inp.id+'" onchange="a3aAutoSave(this)" onblur="a3aAutoSave(this)">'+escHtml(saved)+'</textarea></div>';
   });
 
-  html += '<button class="btn-generate" id="btnGen_3a" onclick=\'generate3ABrief()\'><span>Generate Interview Intelligence Brief</span></button>';
+  html += '<button class="btn-generate gold" id="btnGen_3a" onclick=\'generate3ABrief()\'><span>Generate Interview Intelligence Brief</span></button>';
   html += '<div class="divider-gold"></div>';
   html += '<div class="output-section"><div class="output-header"><div class="output-label">Interview Intelligence Brief</div><div class="output-actions"><button class="btn-action" onclick="copyOutput(\'3a\')">⎘ Copy</button><button class="btn-action" onclick="dlOutput(\'3a\',\'Agent_3A_Interview_Intelligence\')">↓ Download .doc</button><button class="btn-action" onclick="saveOutputToCloud(\'3a\')" title="Save to cloud">☁ Save</button></div></div>';
   html += '<div class="output-box" id="output_3a">'+(savedOut?'<span>'+escHtml(savedOut)+'</span>':'<span class="output-placeholder">Complete the fields above and click Generate.</span>')+'</div></div>';
@@ -2530,7 +2531,7 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
 
   var _eeCtrl = new AbortController();
   // Agent 1 (Career Capital Assessment) produces 5 deliverables and needs more time
-  var _eeTimeoutMs = (id === '0') ? 240000 : 90000;
+  var _eeTimeoutMs = (id === '0') ? 240000 : (id === '3a') ? 180000 : 90000; // Agent 1=4min, Agent 12=3min (largest output), others=90s
   var _eeTimeout = setTimeout(function(){ _eeCtrl.abort(); }, _eeTimeoutMs);
   try {
     var r = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
@@ -2796,12 +2797,36 @@ async function generateAgent0C() {
   var value = getInp('0c','value');
   var audience = getInp('0c','audience')||'All equally';
   var featured = getInp('0c','featured');
-  var sourceResume = optimizedResume || resume;
+  var resumeOverride = (getInp('0c','resumeOverride')||'').trim();
+
+  // Priority: manual override > optimized resume > original resume
+  var sourceResume = resumeOverride || optimizedResume || resume;
   if (!sourceResume) { out.innerHTML = '<div class="error-box">No resume found. Complete Agent 3 (Resume Intelligence) first — your optimized resume from Agent 3 feeds the LinkedIn profile builder. If you have not yet run Agent 3, paste your resume into Agent 1 Step 3 and generate your Career Capital Assessment first.</div>'; return; }
   if (!targetrole) { out.innerHTML = '<div class="error-box">Please enter your target role and industries before generating.</div>'; return; }
+
+  // Trim large inputs to prevent context errors — LinkedIn profile needs highlights, not every word
+  var RESUME_LIMIT = 4000;
+  var CCS_LIMIT = 2000;
+  var resumeTrimmed = sourceResume.length > RESUME_LIMIT;
+  var ccsTrimmed = ccs.length > CCS_LIMIT;
+  var resumeForPrompt = resumeTrimmed ? sourceResume.slice(0, RESUME_LIMIT) : sourceResume;
+  var ccsForPrompt    = ccsTrimmed    ? ccs.slice(0, CCS_LIMIT)             : ccs;
+
+  if (resumeTrimmed || ccsTrimmed) {
+    var existingWarn = document.getElementById('0c-trim-warning');
+    if (!existingWarn) {
+      var warnEl = document.createElement('div');
+      warnEl.id = '0c-trim-warning';
+      warnEl.style.cssText = 'background:#fff8e7;border:1px solid #B8973A;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6B4F00';
+      warnEl.innerHTML = '<strong>Note:</strong> Your ' + (resumeTrimmed ? 'resume' : '') + (resumeTrimmed && ccsTrimmed ? ' and ' : '') + (ccsTrimmed ? 'Career Capital Summary' : '') + ' ' + (resumeTrimmed && ccsTrimmed ? 'were' : 'was') + ' trimmed to avoid a context error. The most important content is still included. If the output misses something critical, paste a condensed resume into the <strong>Resume Override</strong> field below and regenerate.';
+      btn.parentNode.insertBefore(warnEl, btn);
+    }
+  }
+
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div><span>Building your complete LinkedIn profile...</span>';
   out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
-  var prompt = 'Act as my LinkedIn Profile Intelligence Agent.\n\nWrite my complete LinkedIn profile optimized for the algorithm, ATS systems, executive recruiters, and board audiences.\n\n'+(optimizedResume?'MY OPTIMIZED RESUME:\n'+optimizedResume+'\n\n':'MY RESUME:\n'+resume+'\n\n')+(ccs?'MY CAREER CAPITAL SUMMARY:\n'+ccs+'\n\n':'')+'TARGET ROLE: '+targetrole+'\n'+(value?'VALUE PROPOSITIONS:\n'+value+'\n\n':'')+'AUDIENCE PRIORITY: '+audience+'\n'+(featured?'FEATURED CONTENT:\n'+featured+'\n\n':'')+'\nProduce all 7 sections: HEADLINE, ABOUT, EXPERIENCE ENTRIES, SKILLS (top 20), FEATURED SECTION GUIDANCE, LINKEDIN SUMMARY CARD, ALGORITHM AND VISIBILITY NOTES. Every section copy-and-paste ready.';
+  var resumeLabel = resumeOverride ? 'RESUME (manually provided)' : (optimizedResume ? 'MY OPTIMIZED RESUME (from Agent 3)' : 'MY RESUME');
+  var prompt = 'Act as my LinkedIn Profile Intelligence Agent.\n\nWrite my complete LinkedIn profile optimized for the algorithm, ATS systems, executive recruiters, and board audiences.\n\n' + resumeLabel + ':\n' + resumeForPrompt + '\n\n' + (ccsForPrompt ? 'MY CAREER CAPITAL SUMMARY:\n' + ccsForPrompt + '\n\n' : '') + 'TARGET ROLE: ' + targetrole + '\n' + (value ? 'VALUE PROPOSITIONS:\n' + value + '\n\n' : '') + 'AUDIENCE PRIORITY: ' + audience + '\n' + (featured ? 'FEATURED CONTENT:\n' + featured + '\n\n' : '') + '\nProduce all 7 sections: HEADLINE, ABOUT, EXPERIENCE ENTRIES, SKILLS (top 20), FEATURED SECTION GUIDANCE, LINKEDIN SUMMARY CARD, ALGORITHM AND VISIBILITY NOTES. Every section copy-and-paste ready.';
   await callClaudeWithMsgs('0c',[{role:'user',content:prompt}],prompt,btn,'Generate Complete LinkedIn Profile','Agent_4_LinkedIn_Profile');
 }
 
@@ -3903,9 +3928,15 @@ function generate3ABrief() {
   });
   if (!ok) { out.innerHTML = '<div class="error-box">Please complete Company Name and Job Description to generate your brief — every other field is optional.</div>'; return; }
   saveState();
+
+  // Trim large inputs to prevent context errors and timeouts on this heavy prompt
+  var jd       = inputs.jd.length       > 3000 ? inputs.jd.slice(0,3000)       + '\n[JD trimmed for length — key requirements above are sufficient]' : inputs.jd;
+  var ccs      = (inputs.ccs||'').length > 1500 ? inputs.ccs.slice(0,1500)                                                                            : (inputs.ccs||'');
+  var research = (inputs.compresearch||'').length > 2000 ? inputs.compresearch.slice(0,2000) + '\n[Research trimmed]'                                   : (inputs.compresearch||'None');
+
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div><span>Generating...</span>';
   out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
-  var prompt = 'Act as my Company & Interview Intelligence Agent.\n\nCompany: '+inputs.company+'\nCareer Capital Summary: '+(inputs.ccs||'Not provided — use the job description and company context to infer relevant positioning.')+'\nInterviewers: '+(inputs.interviewers||'Not yet known — provide general guidance for adapting to a typical panel for this type of role.')+'\nResearch: '+(inputs.compresearch||'None')+'\nFormat: '+(inputs.format||'Not specified — assume a standard multi-round executive interview process.')+'\n\nJob Description:\n'+inputs.jd+'\n\nProduce:\n1. Business situation summary.\n2. Strategic priorities and why this hire matters now.\n3. For each interviewer (or, if none provided, for the likely panel composition): background/role, likely concerns, how to adapt.\n4. 15 predicted questions with coached answers.\n5. 8 strategic questions for me to ask.\n6. Objections I am likely to face and how to address each.\n7. Closing statement.\n\nThen produce a MOCK INTERVIEW section with exactly 7 questions labeled MOCK Q1 through MOCK Q7 — a mix of behavioral, strategic, and objection-based questions specific to this company and role.';
+  var prompt = 'Act as my Company & Interview Intelligence Agent.\n\nCompany: '+inputs.company+'\nCareer Capital Summary: '+(ccs||'Not provided — use the job description and company context to infer relevant positioning.')+'\nInterviewers: '+(inputs.interviewers||'Not yet known — provide general guidance for adapting to a typical panel for this type of role.')+'\nResearch: '+research+'\nFormat: '+(inputs.format||'Not specified — assume a standard multi-round executive interview process.')+'\n\nJob Description:\n'+jd+'\n\nProduce:\n1. Business situation summary.\n2. Strategic priorities and why this hire matters now.\n3. For each interviewer (or, if none provided, for the likely panel composition): background/role, likely concerns, how to adapt.\n4. 15 predicted questions with coached answers.\n5. 8 strategic questions for me to ask.\n6. Objections I am likely to face and how to address each.\n7. Closing statement.\n\nThen produce a MOCK INTERVIEW section with exactly 7 questions labeled MOCK Q1 through MOCK Q7 — a mix of behavioral, strategic, and objection-based questions specific to this company and role.';
   callClaudeWithMsgs('3a',[{role:'user',content:prompt}],prompt,btn,'Generate Interview Intelligence Brief','Agent_3A_Interview_Intelligence');
 }
 
@@ -4407,10 +4438,16 @@ async function generateMockDebrief() {
 async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
   var out = document.getElementById('output_'+id);
   if (out) { out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>'; }
-  
+  if (btn) { btn.disabled = true; }
+
+  var _ctrl = new AbortController();
+  var _timeoutMs = (id === '0') ? 240000 : (id === '3a') ? 180000 : 90000;
+  var _timeout = setTimeout(function(){ _ctrl.abort(); }, _timeoutMs);
+
   try {
     var r = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
       method: 'POST',
+      signal: _ctrl.signal,
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
@@ -4424,13 +4461,13 @@ async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
     if (!r.ok) {
       var errBody = await r.json().catch(function(){return {error:{message:'Unknown error'}};});
       if (out) out.innerHTML = '<div class="error-box">Error: ' + escHtml((errBody.error||{}).message||'Request failed') + '</div>';
-      if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
       return;
     }
 
     // Stream the response
     var reader = r.body.getReader();
     var decoder = new TextDecoder();
+    var buffer = '';
     var fullText = '';
     if (out) out.innerHTML = '<span></span>';
     var textSpan = out ? out.querySelector('span') : null;
@@ -4438,9 +4475,9 @@ async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
     while (true) {
       var result = await reader.read();
       if (result.done) break;
-      var chunk = decoder.decode(result.value, {stream: true});
-      // Parse SSE lines
-      var lines = chunk.split('\n');
+      buffer += decoder.decode(result.value, {stream: true});
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         if (line.startsWith('data: ')) {
@@ -4491,9 +4528,14 @@ async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
 
   } catch(e) {
     console.error('Streaming error:', e);
-    if (out) out.innerHTML = '<div class="error-box">Connection error. Please try again.<br><br>' + escHtml(e.message) + '</div>';
+    var errMsg = (e.name === 'AbortError')
+      ? 'Generation timed out. Click Generate again — a second attempt usually succeeds.'
+      : 'Connection error. Please try again.<br><br>' + escHtml(e.message);
+    if (out) out.innerHTML = '<div class="error-box">' + errMsg + '</div>';
+  } finally {
+    clearTimeout(_timeout);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
   }
-  if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
 }
 
 var DIM_MAP = {
