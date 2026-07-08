@@ -2123,7 +2123,7 @@ function renderAgent3A() {
     html += '<div class="input-hint">'+inp.hint+'</div><textarea id="inp_3a_'+inp.id+'" rows="'+inp.rows+'" data-agent="3a" data-field="'+inp.id+'" onchange="a3aAutoSave(this)" onblur="a3aAutoSave(this)">'+escHtml(saved)+'</textarea></div>';
   });
 
-  html += '<button class="btn-generate" id="btnGen_3a" onclick=\'generate3ABrief()\'><span>Generate Interview Intelligence Brief</span></button>';
+  html += '<button class="btn-generate gold" id="btnGen_3a" onclick=\'generate3ABrief()\'><span>Generate Interview Intelligence Brief</span></button>';
   html += '<div class="divider-gold"></div>';
   html += '<div class="output-section"><div class="output-header"><div class="output-label">Interview Intelligence Brief</div><div class="output-actions"><button class="btn-action" onclick="copyOutput(\'3a\')">⎘ Copy</button><button class="btn-action" onclick="dlOutput(\'3a\',\'Agent_3A_Interview_Intelligence\')">↓ Download .doc</button><button class="btn-action" onclick="saveOutputToCloud(\'3a\')" title="Save to cloud">☁ Save</button></div></div>';
   html += '<div class="output-box" id="output_3a">'+(savedOut?'<span>'+escHtml(savedOut)+'</span>':'<span class="output-placeholder">Complete the fields above and click Generate.</span>')+'</div></div>';
@@ -2511,8 +2511,10 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
   if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner dark"></div><span>' + btnLabel + '...</span>'; }
 
   var _eeCtrl = new AbortController();
-  // Agent 1 (Career Capital Assessment) produces 5 deliverables and needs more time
-  var _eeTimeoutMs = (id === '0') ? 240000 : 90000;
+  // Agent 1 (Career Capital Assessment) produces 5 deliverables and needs more time.
+  // Agent 12 (3a, Interview Intelligence) produces 7 sections + a full mock interview set —
+  // the longest single-shot output in the app. 90 seconds is not enough; give it 180.
+  var _eeTimeoutMs = (id === '0') ? 240000 : (id === '3a') ? 180000 : 90000;
   var _eeTimeout = setTimeout(function(){ _eeCtrl.abort(); }, _eeTimeoutMs);
   try {
     var r = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
@@ -3921,9 +3923,19 @@ function generate3ABrief() {
   });
   if (!ok) { out.innerHTML = '<div class="error-box">Please complete Company Name and Job Description to generate your brief — every other field is optional.</div>'; return; }
   saveState();
+
+  // Trim large inputs to prevent context errors and timeouts.
+  // The JD and company research can be very long — cap each at a safe length.
+  var JD_LIMIT = 3000;
+  var RESEARCH_LIMIT = 2000;
+  var CCS_LIMIT = 1500;
+  var jdForPrompt = inputs.jd.length > JD_LIMIT ? inputs.jd.slice(0, JD_LIMIT) + '\n[JD trimmed for length — key requirements above are sufficient]' : inputs.jd;
+  var researchForPrompt = (inputs.compresearch||'').length > RESEARCH_LIMIT ? inputs.compresearch.slice(0, RESEARCH_LIMIT) + '\n[Research trimmed for length]' : (inputs.compresearch||'None');
+  var ccsForPrompt = (inputs.ccs||'').length > CCS_LIMIT ? inputs.ccs.slice(0, CCS_LIMIT) : (inputs.ccs||'Not provided — use the job description and company context to infer relevant positioning.');
+
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div><span>Generating...</span>';
   out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
-  var prompt = 'Act as my Company & Interview Intelligence Agent.\n\nCompany: '+inputs.company+'\nCareer Capital Summary: '+(inputs.ccs||'Not provided — use the job description and company context to infer relevant positioning.')+'\nInterviewers: '+(inputs.interviewers||'Not yet known — provide general guidance for adapting to a typical panel for this type of role.')+'\nResearch: '+(inputs.compresearch||'None')+'\nFormat: '+(inputs.format||'Not specified — assume a standard multi-round executive interview process.')+'\n\nJob Description:\n'+inputs.jd+'\n\nProduce:\n1. Business situation summary.\n2. Strategic priorities and why this hire matters now.\n3. For each interviewer (or, if none provided, for the likely panel composition): background/role, likely concerns, how to adapt.\n4. 15 predicted questions with coached answers.\n5. 8 strategic questions for me to ask.\n6. Objections I am likely to face and how to address each.\n7. Closing statement.\n\nThen produce a MOCK INTERVIEW section with exactly 7 questions labeled MOCK Q1 through MOCK Q7 — a mix of behavioral, strategic, and objection-based questions specific to this company and role.';
+  var prompt = 'Act as my Company & Interview Intelligence Agent.\n\nCompany: '+inputs.company+'\nCareer Capital Summary: '+ccsForPrompt+'\nInterviewers: '+(inputs.interviewers||'Not yet known — provide general guidance for adapting to a typical panel for this type of role.')+'\nResearch: '+researchForPrompt+'\nFormat: '+(inputs.format||'Not specified — assume a standard multi-round executive interview process.')+'\n\nJob Description:\n'+jdForPrompt+'\n\nProduce:\n1. Business situation summary.\n2. Strategic priorities and why this hire matters now.\n3. For each interviewer (or, if none provided, for the likely panel composition): background/role, likely concerns, how to adapt.\n4. 15 predicted questions with coached answers.\n5. 8 strategic questions for me to ask.\n6. Objections I am likely to face and how to address each.\n7. Closing statement.\n\nThen produce a MOCK INTERVIEW section with exactly 7 questions labeled MOCK Q1 through MOCK Q7 — a mix of behavioral, strategic, and objection-based questions specific to this company and role.';
   callClaudeWithMsgs('3a',[{role:'user',content:prompt}],prompt,btn,'Generate Interview Intelligence Brief','Agent_3A_Interview_Intelligence');
 }
 
