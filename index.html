@@ -1091,6 +1091,7 @@ function renderAgent0C() {
   html += '<div class="input-section"><div class="input-label">Top 3 Value Propositions</div><div class="input-hint">The three most powerful things you bring to an organization.</div><textarea id="inp_0c_value" rows="4" onchange="autoSaveInput(\'0c\',\'value\')" onblur="autoSaveInput(\'0c\',\'value\')">'+escHtml((STATE.savedInputs||{})['0c_value']||'')+'</textarea></div>';
   html += '<div class="input-section"><div class="input-label">LinkedIn Audience Priority</div><div class="input-hint"><strong>Executive Recruiters</strong>, <strong>Board Members</strong>, <strong>PE/VC Investors</strong>, <strong>C-Suite Peers</strong>, or <strong>All equally</strong>.</div><textarea id="inp_0c_audience" rows="1" onchange="autoSaveInput(\'0c\',\'audience\')" onblur="autoSaveInput(\'0c\',\'audience\')">'+escHtml((STATE.savedInputs||{})['0c_audience']||'All equally')+'</textarea></div>';
   html += '<div class="input-section"><div class="input-label">Featured Section Content (Optional)</div><div class="input-hint">Articles, posts, media coverage, or external links to feature.</div><textarea id="inp_0c_featured" rows="3" onchange="autoSaveInput(\'0c\',\'featured\')" onblur="autoSaveInput(\'0c\',\'featured\')">'+escHtml((STATE.savedInputs||{})['0c_featured']||'')+'</textarea></div>';
+  html += '<div class="input-section" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="input-label">Resume Override <span style="font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0">(Optional — use if you get a context error)</span></div><div class="input-hint">If generation fails with a length or context error, paste a shorter version of your resume here — 1–2 pages of highlights is ideal. This overrides the auto-loaded resume for this agent only.</div><textarea id="inp_0c_resumeOverride" rows="6" placeholder="Paste a condensed resume here only if needed..." onchange="autoSaveInput(\'0c\',\'resumeOverride\')" onblur="autoSaveInput(\'0c\',\'resumeOverride\')">'+escHtml((STATE.savedInputs||{})['0c_resumeOverride']||'')+'</textarea></div>';
   html += '<button class="btn-generate gold" id="btnGen_0c" onclick="generateAgent0C()" '+((resume||optimizedResume)?'':'disabled')+'><span>Generate Complete LinkedIn Profile</span></button>';
   html += '<div class="divider-gold"></div>';
   html += '<div class="output-section"><div class="output-header"><div class="output-label">Agent 4 Output — Complete LinkedIn Profile</div><div class="output-actions"><button class="btn-action" onclick="copyOutput(\'0c\')">⎘ Copy</button><button class="btn-action" onclick="dlOutput(\'0c\',\'Agent_0C_LinkedIn_Profile\')">↓ Download .doc</button><button class="btn-action" onclick="saveOutputToCloud(\'0c\')" title="Save to cloud">☁ Save</button></div></div>';
@@ -2777,12 +2778,48 @@ async function generateAgent0C() {
   var value = getInp('0c','value');
   var audience = getInp('0c','audience')||'All equally';
   var featured = getInp('0c','featured');
-  var sourceResume = optimizedResume || resume;
+  var resumeOverride = getInp('0c','resumeOverride')||'';
+
+  // Priority: manual override > optimized resume > original resume
+  var sourceResume = resumeOverride.trim() || optimizedResume || resume;
+
   if (!sourceResume) { out.innerHTML = '<div class="error-box">No resume found. Complete Agent 3 (Resume Intelligence) first — your optimized resume from Agent 3 feeds the LinkedIn profile builder. If you have not yet run Agent 3, paste your resume into Agent 1 Step 3 and generate your Career Capital Assessment first.</div>'; return; }
   if (!targetrole) { out.innerHTML = '<div class="error-box">Please enter your target role and industries before generating.</div>'; return; }
+
+  // Trim inputs to safe lengths to prevent context errors.
+  // The LinkedIn profile agent needs the highlights, not every word of a multi-path resume.
+  var RESUME_LIMIT = 4000;
+  var CCS_LIMIT = 2000;
+  var resumeTrimmed = false;
+  var ccsTrimmed = false;
+
+  if (sourceResume.length > RESUME_LIMIT) {
+    sourceResume = sourceResume.slice(0, RESUME_LIMIT);
+    resumeTrimmed = true;
+  }
+  var ccsForPrompt = ccs;
+  if (ccsForPrompt.length > CCS_LIMIT) {
+    ccsForPrompt = ccsForPrompt.slice(0, CCS_LIMIT);
+    ccsTrimmed = true;
+  }
+
+  if (resumeTrimmed || ccsTrimmed) {
+    var trimWarning = document.getElementById('0c-trim-warning');
+    if (!trimWarning) {
+      trimWarning = document.createElement('div');
+      trimWarning.id = '0c-trim-warning';
+      trimWarning.className = 'error-box';
+      trimWarning.style.cssText = 'background:#fff8e7;border-color:#B8973A;color:#6B4F00;margin-bottom:12px';
+      btn.parentNode.insertBefore(trimWarning, btn);
+    }
+    trimWarning.innerHTML = '<strong>Note:</strong> Your ' + (resumeTrimmed ? 'resume' : '') + (resumeTrimmed && ccsTrimmed ? ' and ' : '') + (ccsTrimmed ? 'Career Capital Summary' : '') + ' ' + (resumeTrimmed && ccsTrimmed ? 'were' : 'was') + ' trimmed to prevent a context error. The most important content — your opening positioning, recent roles, and key accomplishments — is included. If the output misses something critical, paste a shorter version of your resume into the <strong>Resume Override</strong> field above and regenerate.';
+  }
+
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div><span>Building your complete LinkedIn profile...</span>';
   out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
-  var prompt = 'Act as my LinkedIn Profile Intelligence Agent.\n\nWrite my complete LinkedIn profile optimized for the algorithm, ATS systems, executive recruiters, and board audiences.\n\n'+(optimizedResume?'MY OPTIMIZED RESUME:\n'+optimizedResume+'\n\n':'MY RESUME:\n'+resume+'\n\n')+(ccs?'MY CAREER CAPITAL SUMMARY:\n'+ccs+'\n\n':'')+'TARGET ROLE: '+targetrole+'\n'+(value?'VALUE PROPOSITIONS:\n'+value+'\n\n':'')+'AUDIENCE PRIORITY: '+audience+'\n'+(featured?'FEATURED CONTENT:\n'+featured+'\n\n':'')+'\nProduce all 7 sections: HEADLINE, ABOUT, EXPERIENCE ENTRIES, SKILLS (top 20), FEATURED SECTION GUIDANCE, LINKEDIN SUMMARY CARD, ALGORITHM AND VISIBILITY NOTES. Every section copy-and-paste ready.';
+
+  var resumeLabel = resumeOverride.trim() ? 'RESUME (manually provided)' : (optimizedResume ? 'OPTIMIZED RESUME (from Agent 3)' : 'RESUME');
+  var prompt = 'Act as my LinkedIn Profile Intelligence Agent.\n\nWrite my complete LinkedIn profile optimized for the algorithm, ATS systems, executive recruiters, and board audiences.\n\n' + resumeLabel + ':\n' + sourceResume + '\n\n' + (ccsForPrompt ? 'CAREER CAPITAL SUMMARY:\n' + ccsForPrompt + '\n\n' : '') + 'TARGET ROLE: ' + targetrole + '\n' + (value ? 'VALUE PROPOSITIONS:\n' + value + '\n\n' : '') + 'AUDIENCE PRIORITY: ' + audience + '\n' + (featured ? 'FEATURED CONTENT:\n' + featured + '\n\n' : '') + '\nProduce all 7 sections: HEADLINE, ABOUT, EXPERIENCE ENTRIES, SKILLS (top 20), FEATURED SECTION GUIDANCE, LINKEDIN SUMMARY CARD, ALGORITHM AND VISIBILITY NOTES. Every section copy-and-paste ready.';
   await callClaudeWithMsgs('0c',[{role:'user',content:prompt}],prompt,btn,'Generate Complete LinkedIn Profile','Agent_4_LinkedIn_Profile');
 }
 
