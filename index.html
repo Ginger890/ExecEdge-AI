@@ -963,7 +963,7 @@ function renderAgent0B() {
   var html = '<div class="context-panel"><span class="context-icon">◆</span><div class="context-text"><strong>Agent 3 — Resume Intelligence.</strong> Your executive résumé is a positioning document, not a job history. It is read by search firm partners, board compensation committees, and C-suite hiring managers who spend fewer than 90 seconds on a first pass. In those 90 seconds, the document must communicate your career trajectory, scale of responsibility, business impact, and positioning for the target role — without requiring the reader to connect the dots.<br><br>Why it matters: Search firms use your résumé to build their candidate brief. Boards use it to prepare for compensation committee discussions. Hiring CEOs use it to decide whether to take a call. The document either does the positioning work for you or forces the reader to do it themselves — and readers who have to work move on.<br><br>What to do: Paste your current résumé in full. The agent rebuilds it from scratch. Confirm every date, title, and achievement for accuracy before saving. This becomes your master document for all subsequent customizations.</div></div>';
 
   if (resume) {
-    html += '<div class="auto-pull-notice"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Resume auto-loaded from Agent 1.</strong><div class="auto-pull-preview">' + escHtml(resume.substring(0,280)) + (resume.length>280?'...':'') + '</div></div></div>';
+    html += '<div class="auto-pull-notice" onclick="navigateTo(STATE.currentAgent)" title="Click to refresh" style="cursor:pointer"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Resume auto-loaded from Agent 1.</strong> <span style="font-size:10px;color:rgba(232,210,138,.55)">(click ⟳ to refresh)</span><div class="auto-pull-preview">' + escHtml(resume.substring(0,280)) + (resume.length>280?'...':'') + '</div></div></div>';
   } else {
     html += '<div class="error-box">No resume found from Agent 1, paste your resume in Step 3, and generate your Career Capital Summary first.</div>';
   }
@@ -1084,8 +1084,8 @@ function renderAgent0C() {
   });
   html += '<button class="btn-action" style="margin-top:4px" onclick="populateLIFields()">↓ Push to Profile Fields Below</button>';
   html += '</div></div>';
-  if (optimizedResume) { html += '<div class="auto-pull-notice"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Optimized resume auto-loaded from Agent 3.</strong><div class="auto-pull-preview">'+escHtml(optimizedResume.substring(0,300))+(optimizedResume.length>300?'...':'')+'</div></div></div>'; }
-  else if (resume) { html += '<div class="auto-pull-notice"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Original resume loaded from Agent 1.</strong> For best results, complete Agent 3 first.</div></div>'; }
+  if (optimizedResume) { html += '<div class="auto-pull-notice" onclick="navigateTo(STATE.currentAgent)" title="Click to refresh" style="cursor:pointer"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Optimized resume auto-loaded from Agent 3.</strong> <span style="font-size:10px;color:rgba(232,210,138,.55)">(click ⟳ to refresh)</span><div class="auto-pull-preview">'+escHtml(optimizedResume.substring(0,300))+(optimizedResume.length>300?'...':'')+'</div></div></div>'; }
+  else if (resume) { html += '<div class="auto-pull-notice" onclick="navigateTo(STATE.currentAgent)" title="Click to refresh" style="cursor:pointer"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Original resume loaded from Agent 1.</strong> For best results, complete Agent 3 first. <span style="font-size:10px;color:rgba(232,210,138,.55)">(click ⟳ to refresh)</span></div></div>'; }
   else { html += '<div class="error-box">No resume found. Please return to Agent 1 and complete Step 3 first.</div>'; }
   html += '<div class="input-section"><div class="input-label">Target Role &amp; Industries <span class="input-required">Required</span></div><div class="input-hint">The specific title and industries you are targeting.</div><textarea id="inp_0c_targetrole" rows="2" onchange="autoSaveInput(\'0c\',\'targetrole\')" onblur="autoSaveInput(\'0c\',\'targetrole\')">'+escHtml((STATE.savedInputs||{})['0c_targetrole']||'')+'</textarea></div>';
   html += '<div class="input-section"><div class="input-label">Top 3 Value Propositions</div><div class="input-hint">The three most powerful things you bring to an organization.</div><textarea id="inp_0c_value" rows="4" onchange="autoSaveInput(\'0c\',\'value\')" onblur="autoSaveInput(\'0c\',\'value\')">'+escHtml((STATE.savedInputs||{})['0c_value']||'')+'</textarea></div>';
@@ -2122,7 +2122,7 @@ function renderAgent3A() {
     }}
     html += '<div class="input-section"><div class="input-label">'+inp.label+(inp.required?' <span class="input-required">Required</span>':'')+'</div>';
     if (inp.id === 'ccs' && saved) {
-      html += '<div class="auto-pull-notice" style="margin-bottom:8px"><div class="auto-pull-icon">↳</div><div class="auto-pull-text"><strong>Career Capital Summary auto-loaded from Agent 1.</strong><div class="auto-pull-preview">'+escHtml(saved.substring(0,200))+(saved.length>200?'...':'')+'</div></div></div>';
+      html += '<div class="auto-pull-notice" style="margin-bottom:8px;cursor:pointer" onclick="navigateTo(STATE.currentAgent)" title="Click to refresh"><div class="auto-pull-icon">↳</div><div class="auto-pull-text"><strong>Career Capital Summary auto-loaded from Agent 1.</strong> <span style="font-size:10px;color:rgba(232,210,138,.55)">(click to refresh)</span><div class="auto-pull-preview">'+escHtml(saved.substring(0,200))+(saved.length>200?'...':'')+'</div></div></div>';
     }
     html += '<div class="input-hint">'+inp.hint+'</div><textarea id="inp_3a_'+inp.id+'" rows="'+inp.rows+'" data-agent="3a" data-field="'+inp.id+'" onchange="a3aAutoSave(this)" onblur="a3aAutoSave(this)">'+escHtml(saved)+'</textarea></div>';
   });
@@ -2358,7 +2358,7 @@ function renderAgentBody(id, ag) {
     }
     html += '<div class="input-section"><div class="input-label">'+inp.label+(inp.required?' <span class="input-required">Required</span>':'')+'</div>';
     if (inp.id === 'ccs' && saved) {
-      html += '<div class="auto-pull-notice" style="margin-bottom:8px"><div class="auto-pull-icon">↳</div><div class="auto-pull-text"><strong>Career Capital Summary auto-loaded from Agent 1.</strong><div class="auto-pull-preview">'+escHtml(saved.substring(0,200))+(saved.length>200?'...':'')+'</div></div></div>';
+      html += '<div class="auto-pull-notice" style="margin-bottom:8px;cursor:pointer" onclick="navigateTo(STATE.currentAgent)" title="Click to refresh"><div class="auto-pull-icon">↳</div><div class="auto-pull-text"><strong>Career Capital Summary auto-loaded from Agent 1.</strong> <span style="font-size:10px;color:rgba(232,210,138,.55)">(click to refresh)</span><div class="auto-pull-preview">'+escHtml(saved.substring(0,200))+(saved.length>200?'...':'')+'</div></div></div>';
     }
     if (inp.id === 'companylist' && id === '1') {
       // MCP #3 — Company Auto-Research
@@ -5691,7 +5691,7 @@ function renderAgent075() {
 
   // Auto-pull notice if CCS exists
   if (ccs) {
-    html += '<div class="auto-pull-notice"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Career Capital Summary auto-loaded from Agent 1.</strong><div class="auto-pull-preview">' + escHtml(ccs.substring(0, 280)) + (ccs.length > 280 ? '...' : '') + '</div></div></div>';
+    html += '<div class="auto-pull-notice" onclick="navigateTo(STATE.currentAgent)" title="Click to refresh" style="cursor:pointer"><div class="auto-pull-icon">⟳</div><div class="auto-pull-text"><strong>Career Capital Summary auto-loaded from Agent 1.</strong> <span style="font-size:10px;color:rgba(232,210,138,.55)">(click ⟳ to refresh)</span><div class="auto-pull-preview">' + escHtml(ccs.substring(0, 280)) + (ccs.length > 280 ? '...' : '') + '</div></div></div>';
   } else {
     html += '<div class="carry-forward-box"><div class="carry-title">Bring This From Agent 1</div><div class="carry-item"><span style="color:var(--gold);flex-shrink:0">▸</span><span>Paste the section labeled <strong>CAREER CAPITAL SUMMARY — START HERE</strong> from Agent 1 into the first field below if it did not auto-load.</span></div></div>';
   }
