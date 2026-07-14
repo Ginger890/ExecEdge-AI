@@ -6797,6 +6797,353 @@ async function triggerCompanyResearch() {
 
 // ════════════════════════════════════════════════════════
 
+
+function renderSearchDashboard() {
+  var d = getDash();
+  var companies = d.companies || [];
+  var recruiters = d.recruiters || [];
+  var interviews = d.interviews || [];
+  var boards = d.boardDiscussions || [];
+  var warm  = companies.filter(function(c){return c.tier==='warm';}).length;
+  var active= companies.filter(function(c){return c.tier==='active';}).length;
+  var cold  = companies.filter(function(c){return c.tier==='cold';}).length;
+  var html = '<div class="dash-shell">';
+  html += '<div class="dash-hero">';
+  html += '<div><div class="dash-hero-title">Search Dashboard</div><div class="dash-hero-sub">Live pipeline tracking — updated in real time as your search develops.</div></div>';
+  html += '<div style="display:flex;gap:8px;align-self:center;flex-wrap:wrap">';
+  html += '<button class="btn-action" onclick="downloadUnemploymentLog()" title="Download as unemployment work-search log">&#128202; Excel Activity Log</button>';
+  html += '<button class="btn-action" onclick="navigateTo(\'4a\')">&#8594; Weekly Briefing</button>';
+  html += '</div></div>';
+  html += '<div class="dash-stats-row">';
+  html += '<div class="dash-stat-card"><div class="dash-stat-val">' + companies.length + '</div><div class="dash-stat-lbl">Target Companies</div><div class="dash-sub-row"><span class="dash-sub-chip warm">' + warm + ' Warm</span><span class="dash-sub-chip active">' + active + ' Active</span><span class="dash-sub-chip cold">' + cold + ' Cold</span></div></div>';
+  html += '<div class="dash-stat-card"><div class="dash-stat-val">' + recruiters.length + '</div><div class="dash-stat-lbl">Recruiters Contacted</div></div>';
+  html += '<div class="dash-stat-card"><div class="dash-stat-val">' + interviews.length + '</div><div class="dash-stat-lbl">Interviews</div></div>';
+  html += '<div class="dash-stat-card"><div class="dash-stat-val">' + boards.length + '</div><div class="dash-stat-lbl">Board Discussions</div></div>';
+  html += '</div>';
+  // Target Companies
+  html += '<div class="dash-section"><div class="dash-section-header"><div class="dash-section-title">Target Companies</div><button class="dash-add-btn" onclick="addDashRow(\'companies\')">+ Add Company</button></div>';
+  if (companies.length === 0) { html += '<div class="dash-empty">No companies tracked yet. Add your target companies to start tracking pipeline momentum.</div>'; }
+  else {
+    html += '<table class="dash-table"><thead><tr><th>Company</th><th>Role Target</th><th>Tier</th><th>Status / Next Step</th><th>Last Contact</th><th></th></tr></thead><tbody>';
+    companies.forEach(function(c,idx){ var tc=c.tier==='warm'?'tier-warm':c.tier==='active'?'tier-active':'tier-cold'; html+='<tr><td><strong>'+escHtml(c.name||'')+'</strong></td><td>'+escHtml(c.role||'')+'</td><td><span class="tier-badge '+tc+'">'+(c.tier||'cold')+'</span></td><td>'+escHtml(c.status||'')+'</td><td>'+escHtml(c.lastContact||'')+'</td><td><button class="dash-del-btn" onclick="deleteDashRow(\'companies\','+idx+')" title="Remove">&times;</button></td></tr>'; });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+  // Recruiters
+  html += '<div class="dash-section"><div class="dash-section-header"><div class="dash-section-title">Recruiters Contacted</div><button class="dash-add-btn" onclick="addDashRow(\'recruiters\')">+ Add Recruiter</button></div>';
+  if (recruiters.length === 0) { html += '<div class="dash-empty">No recruiters tracked yet. Target 20+ search professionals aligned to your level and sector.</div>'; }
+  else {
+    html += '<table class="dash-table"><thead><tr><th>Name</th><th>Firm</th><th>Specialty</th><th>Status</th><th>Last Contact</th><th></th></tr></thead><tbody>';
+    recruiters.forEach(function(r,idx){ html+='<tr><td><strong>'+escHtml(r.name||'')+'</strong></td><td>'+escHtml(r.firm||'')+'</td><td>'+escHtml(r.specialty||'')+'</td><td>'+escHtml(r.status||'')+'</td><td>'+escHtml(r.lastContact||'')+'</td><td><button class="dash-del-btn" onclick="deleteDashRow(\'recruiters\','+idx+')" title="Remove">&times;</button></td></tr>'; });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+  // Interviews
+  html += '<div class="dash-section"><div class="dash-section-header"><div class="dash-section-title">Interviews</div><button class="dash-add-btn" onclick="addDashRow(\'interviews\')">+ Add Interview</button></div>';
+  if (interviews.length === 0) { html += '<div class="dash-empty">No interviews logged yet.</div>'; }
+  else {
+    html += '<table class="dash-table"><thead><tr><th>Company</th><th>Role</th><th>Stage</th><th>Date</th><th>Outcome / Next Step</th><th></th></tr></thead><tbody>';
+    interviews.forEach(function(iv,idx){ html+='<tr><td><strong>'+escHtml(iv.company||'')+'</strong></td><td>'+escHtml(iv.role||'')+'</td><td><span class="tier-badge tier-interview">'+escHtml(iv.stage||'')+'</span></td><td>'+escHtml(iv.date||'')+'</td><td>'+escHtml(iv.outcome||'')+'</td><td><button class="dash-del-btn" onclick="deleteDashRow(\'interviews\','+idx+')" title="Remove">&times;</button></td></tr>'; });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+  // Board Discussions
+  html += '<div class="dash-section"><div class="dash-section-header"><div class="dash-section-title">Board Discussions</div><button class="dash-add-btn" onclick="addDashRow(\'boardDiscussions\')">+ Add Discussion</button></div>';
+  if (boards.length === 0) { html += '<div class="dash-empty">No board discussions logged yet.</div>'; }
+  else {
+    html += '<table class="dash-table"><thead><tr><th>Company / Board</th><th>Contact</th><th>Status</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody>';
+    boards.forEach(function(b,idx){ html+='<tr><td><strong>'+escHtml(b.company||'')+'</strong></td><td>'+escHtml(b.contact||'')+'</td><td><span class="tier-badge tier-board">'+escHtml(b.status||'')+'</span></td><td>'+escHtml(b.date||'')+'</td><td>'+escHtml(b.notes||'')+'</td><td><button class="dash-del-btn" onclick="deleteDashRow(\'boardDiscussions\','+idx+')" title="Remove">&times;</button></td></tr>'; });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+  // Cloud Documents
+  html += '<div class="dash-section" id="cloud-docs-section"><div class="dash-section-header"><div class="dash-section-title">Your Saved Documents (Cloud)</div><button class="dash-add-btn" onclick="refreshCloudDocsPanel()">&#8635; Refresh</button></div><div id="cloud-docs-body"><div class="dash-empty">Loading your saved documents&#8230;</div></div></div>';
+  // Saved Videos
+  html += renderDashboardVideoSection();
+  // Auto-doc suite
+  if (STATE.savedOutputs && STATE.savedOutputs['1']) { html += renderAgent7DocPanel(); }
+  html += '</div>';
+  return html;
+}
+
+
+function renderAgent7DocPanel() {
+  var docs = STATE.agent7Docs || {};
+  var items = [
+    {key:'evp',        label:'Executive Value Proposition', icon:'◆'},
+    {key:'impactBrief',label:'Impact Brief',                icon:'▸'},
+    {key:'boardBio',   label:'Board Bio',                   icon:'⬡'},
+    {key:'recruiterResume', label:'Recruiter Resume',       icon:'▤'},
+    {key:'networkingIntro', label:'Networking Introduction',icon:'◉'}
+  ];
+  var allDone = items.every(function(it){ return !!docs[it.key]; });
+  var anyDone = items.some(function(it){ return !!docs[it.key]; });
+
+  var html = '<div class="auto-doc-suite" id="agent7-autodoc-suite">';
+  html += '<div class="auto-doc-banner">';
+  html += '<div class="auto-doc-banner-icon">⚡</div>';
+  html += '<div class="auto-doc-banner-text">';
+  html += '<div class="auto-doc-banner-title">5 Executive Documents — Auto-Generated</div>';
+  html += '<div class="auto-doc-banner-desc">From your Agent 7 positioning intelligence, ExecEdge AI™ automatically creates every document you need for active outreach. No additional prompts required.</div>';
+  html += '<div class="auto-doc-progress">';
+  items.forEach(function(it){
+    var isDone = !!docs[it.key];
+    html += '<span class="auto-doc-pill' + (isDone?' done':'') + '">' + (isDone?'✓ ':'') + it.label + '</span>';
+  });
+  html += '</div>';
+  if (!anyDone && !_a7DocsInProgress) {
+    html += '<button class="btn-generate gold" style="margin-top:12px" onclick="autoGenerateAgent7Docs(STATE.savedOutputs[\'1\']||\'\')" id="btnA7Docs"><span>✦ Generate All 5 Documents Now →</span></button>';
+  }
+  html += '</div></div>';
+
+  items.forEach(function(it){
+    var isDone = !!docs[it.key];
+    var isActive = !isDone && _a7DocsInProgress && document.getElementById('a7doc-spinner-'+it.key);
+    html += '<div class="auto-doc-card" id="a7doc-card-'+it.key+'">';
+    html += '<div class="auto-doc-card-header" onclick="toggleA7DocCard(\''+it.key+'\')"><div class="auto-doc-card-title">';
+    html += '<span class="auto-doc-status-dot' + (isDone?' done':'') + '" id="a7dot-'+it.key+'"></span>';
+    html += it.icon + ' ' + it.label;
+    if (_a7DocsInProgress && !isDone) {
+      html += ' <span id="a7doc-spinner-'+it.key+'" class="spinner dark" style="display:none;margin-left:4px"></span>';
+    }
+    html += '</div>';
+    if (isDone) {
+      html += '<div class="auto-doc-card-actions">';
+      html += '<button class="btn-action" onclick="event.stopPropagation();copyA7Doc(\''+it.key+'\')">⎘ Copy</button>';
+      html += '<button class="btn-action" onclick="event.stopPropagation();dlA7Doc(\''+it.key+'\',\''+it.label.replace(/\s+/g,'_')+'\')">↓ .doc</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div class="auto-doc-card-body" id="a7doc-body-'+it.key+'">';
+    if (isDone) {
+      html += '<div class="auto-doc-output" id="a7doc-out-'+it.key+'">' + escHtml(docs[it.key]) + '</div>';
+    } else {
+      html += '<div class="auto-doc-output" id="a7doc-out-'+it.key+'" style="color:var(--text-muted);font-style:italic">Generating...</div>';
+    }
+    html += '</div></div>';
+  });
+
+  html += '</div>';
+  return html;
+}
+
+function toggleA7DocCard(key) {
+  var body = document.getElementById('a7doc-body-'+key);
+  if (body) body.classList.toggle('open');
+}
+
+function copyA7Doc(key) {
+  var t = (STATE.agent7Docs||{})[key] || '';
+  if (!t) { showToast('No content yet.'); return; }
+  var fallbackCopy = function(){
+    var ta = document.createElement('textarea'); ta.value = t;
+    ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('Copied to clipboard.');
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(function(){ showToast('Copied to clipboard.'); }).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
+  }
+}
+
+function dlA7Doc(key, filename) {
+  var t = (STATE.agent7Docs||{})[key] || '';
+  if (!t) { showToast('No content to download yet.'); return; }
+  downloadAsDoc(t, 'ExecEdge_Agent7_'+filename, filename.replace(/_/g,' ') + ' — ExecEdge AI™');
+}
+
+async function autoGenerateAgent7Docs(marketIntelOutput) {
+  if (_a7DocsInProgress) return;
+  if (!marketIntelOutput || !marketIntelOutput.trim()) {
+    showToast('Agent 7 must be completed first.');
+    return;
+  }
+  _a7DocsInProgress = true;
+  if (!STATE.agent7Docs) STATE.agent7Docs = {evp:'',impactBrief:'',boardBio:'',recruiterResume:'',networkingIntro:''};
+
+  var ccs = STATE.savedOutputs['0'] || '';
+  var targetRole = (STATE.savedInputs||{})['1_targetrole'] || 'executive';
+  var industries  = (STATE.savedInputs||{})['1_industries'] || '';
+  var transformation = (STATE.savedInputs||{})['1_transformation'] || '';
+
+  var docDefs = [
+    {
+      key: 'evp',
+      label: 'Executive Value Proposition',
+      prompt: 'Based on the following Market Intelligence & Positioning output, write a crisp one-page Executive Value Proposition document.\n\nTarget Role: ' + targetRole + '\nTransformation Themes: ' + transformation + '\nMarket Intelligence Output:\n' + marketIntelOutput + '\n\nCareer Capital Summary:\n' + ccs + '\n\nFormat:\nHEADER: Name placeholder + Target Role\nOPENING STATEMENT (3-4 sentences): The most compelling version of this executive\'s value.\nCORE VALUE DRIVERS (3 bullets): Each with a quantified outcome.\nINDUSTRY FIT: 2-3 sentences on sector-specific fit.\nKEY WINS (3 bullets): Strongest proof points.\nCLOSING CALL TO ACTION: One sentence.\n\nWrite as a peer-level document, not a resume.'
+    },
+    {
+      key: 'impactBrief',
+      label: 'Impact Brief',
+      prompt: 'Based on the following Market Intelligence & Positioning output, write a two-page Executive Impact Brief.\n\nTarget Role: ' + targetRole + '\nMarket Intelligence Output:\n' + marketIntelOutput + '\n\nCareer Capital Summary:\n' + ccs + '\n\nFormat:\nTITLE: [Name] — Executive Impact Brief\nSECTION 1 — THE EXECUTIVE (5-6 sentences): Compelling professional summary.\nSECTION 2 — TRANSFORMATION RECORD (4-5 bullets): Quantified results from most recent roles.\nSECTION 3 — WHAT I BUILD (3 bullets): Specific organizational capabilities created.\nSECTION 4 — WHERE I ADD THE MOST VALUE: 3 paragraphs on the business problems this executive solves.\nSECTION 5 — SELECTED RESULTS: 5 quantified accomplishments.\n\nWrite at C-suite peer level. No resume language.'
+    },
+    {
+      key: 'boardBio',
+      label: 'Board Bio',
+      prompt: 'Based on the following Market Intelligence & Positioning output, write a board-facing executive biography (approximately 250 words).\n\nTarget Role: ' + targetRole + '\nMarket Intelligence Output:\n' + marketIntelOutput + '\n\nCareer Capital Summary:\n' + ccs + '\n\nRequirements:\n- Third-person voice\n- Opens with current/most recent role and headline achievement\n- Covers career arc in 2-3 sentences\n- Calls out board/governance/advisory experience if applicable\n- Notes education and credentials at the end\n- Board-appropriate, governance-oriented language\n- 250 words maximum\n- No resume structure — flowing prose'
+    },
+    {
+      key: 'recruiterResume',
+      label: 'Recruiter Resume',
+      prompt: 'Based on the following Market Intelligence & Positioning output, write a one-page recruiter-optimized executive summary (not a full resume — a targeted executive snapshot for search firm use).\n\nTarget Role: ' + targetRole + '\nIndustries: ' + industries + '\nMarket Intelligence Output:\n' + marketIntelOutput + '\n\nCareer Capital Summary:\n' + ccs + '\n\nFormat (one page / ~400 words):\nNAME (placeholder)\nTARGET ROLE | GEOGRAPHY\n\nEXECUTIVE SNAPSHOT (4 sentences): Positioning statement recruiters can use in a client pitch.\n\nCORE COMPETENCIES (6-8 keywords): ATS and recruiter-relevant terms from the market intelligence.\n\nCAREER HIGHLIGHTS (3-4 bullets): Most recent roles with quantified results.\n\nINDUSTRY & FUNCTIONAL EXPERTISE: 2-line list of sectors and functions.\n\nWrite as a direct-to-recruiter document — specific, scannable, no filler.'
+    },
+    {
+      key: 'networkingIntro',
+      label: 'Networking Introduction',
+      prompt: 'Based on the following Market Intelligence & Positioning output, write three versions of a Networking Introduction for this executive.\n\nTarget Role: ' + targetRole + '\nMarket Intelligence Output:\n' + marketIntelOutput + '\n\nCareer Capital Summary:\n' + ccs + '\n\nProduce three versions:\n\nVERSION 1 — 30-Second Verbal Introduction (~75 words): For networking events and introductory calls. Natural spoken language.\n\nVERSION 2 — LinkedIn Connection Request Note (under 300 characters): For cold outreach to peers and targets.\n\nVERSION 3 — Email Opening Paragraph (~100 words): For cold email introductions to decision-makers.\n\nAll versions: peer-to-peer tone, specific, no generic language, leads with value not job-seeking.'
+    }
+  ];
+
+  // Re-render the panel so spinners are visible
+  var existingPanel = document.getElementById('agent7-autodoc-suite');
+  if (existingPanel) {
+    existingPanel.outerHTML = renderAgent7DocPanel();
+  } else {
+    // Append to agent body
+    var body = document.getElementById('agentBody');
+    if (body) {
+      var div = document.createElement('div');
+      div.innerHTML = renderAgent7DocPanel();
+      body.appendChild(div.firstChild);
+    }
+  }
+
+  // Generate each doc in sequence
+  var _a7SuccessCount = 0;
+  var _a7FailedLabels = [];
+  for (var di = 0; di < docDefs.length; di++) {
+    var def = docDefs[di];
+    // Show spinner and open card
+    var dotEl = document.getElementById('a7dot-' + def.key);
+    var bodyEl = document.getElementById('a7doc-body-' + def.key);
+    var outEl  = document.getElementById('a7doc-out-'  + def.key);
+    if (dotEl)  { dotEl.className = 'auto-doc-status-dot active'; }
+    if (bodyEl) { bodyEl.classList.add('open'); }
+    if (outEl)  { outEl.textContent = 'Generating…'; outEl.style.fontStyle = 'italic'; outEl.style.color = 'var(--text-muted)'; }
+
+    try {
+      var text = await streamA7Doc(def.key, def.prompt, outEl);
+      if (!text || !text.trim()) throw new Error('Empty response');
+      STATE.agent7Docs[def.key] = text;
+      saveState();
+      _a7SuccessCount++;
+      // Update dot to done
+      if (dotEl) { dotEl.className = 'auto-doc-status-dot done'; }
+      // Refresh card header to show action buttons
+      var cardEl = document.getElementById('a7doc-card-' + def.key);
+      if (cardEl) {
+        var headerEl = cardEl.querySelector('.auto-doc-card-header');
+        if (headerEl) {
+          headerEl.innerHTML = '<div class="auto-doc-card-title">'
+            + '<span class="auto-doc-status-dot done"></span>'
+            + (def.key==='evp'?'◆':def.key==='impactBrief'?'▸':def.key==='boardBio'?'⬡':def.key==='recruiterResume'?'▤':'◉')
+            + ' ' + def.label
+            + '</div>'
+            + '<div class="auto-doc-card-actions">'
+            + '<button class="btn-action" onclick="event.stopPropagation();copyA7Doc(\''+def.key+'\')">⎘ Copy</button>'
+            + '<button class="btn-action" onclick="event.stopPropagation();dlA7Doc(\''+def.key+'\',\''+def.label.replace(/\s+/g,'_')+'\')">↓ .doc</button>'
+            + '</div>';
+        }
+      }
+      if (outEl) { outEl.style.fontStyle = 'normal'; outEl.style.color = 'var(--text-primary)'; }
+    } catch(e) {
+      if (outEl) { outEl.textContent = 'Error generating this document. Please try again.'; outEl.style.color = 'var(--danger)'; }
+      if (dotEl) { dotEl.className = 'auto-doc-status-dot'; }
+      _a7FailedLabels.push(def.label);
+      console.error('A7 doc error:', def.key, e);
+    }
+  }
+
+  _a7DocsInProgress = false;
+  saveState();
+  // Update banner pills — reflect actual success/failure per document
+  var bannerEl = document.querySelector('.auto-doc-progress');
+  if (bannerEl) {
+    var items2 = [{key:'evp',label:'Executive Value Proposition'},{key:'impactBrief',label:'Impact Brief'},{key:'boardBio',label:'Board Bio'},{key:'recruiterResume',label:'Recruiter Resume'},{key:'networkingIntro',label:'Networking Introduction'}];
+    bannerEl.innerHTML = items2.map(function(it){
+      var failed = _a7FailedLabels.indexOf(it.label) > -1;
+      return failed ? ('<span class="auto-doc-pill" style="background:rgba(193,68,14,0.12);color:var(--danger);border-color:rgba(193,68,14,0.3)">⚠ ' + it.label + '</span>') : ('<span class="auto-doc-pill done">✓ ' + it.label + '</span>');
+    }).join('');
+  }
+  // Save each auto-doc to dedicated cloud keys for reliable cross-device restore
+  var a7CloudKeys = {evp:'agent7_evp', impactBrief:'agent7_impactBrief', boardBio:'agent7_boardBio', recruiterResume:'agent7_recruiterResume', networkingIntro:'agent7_networkingIntro'};
+  var docs = STATE.agent7Docs || {};
+  Object.keys(a7CloudKeys).forEach(function(k) {
+    if (docs[k]) saveToCloud(a7CloudKeys[k], docs[k]);
+  });
+  if (_a7FailedLabels.length === 0) {
+    showToast('✓ All 5 executive documents generated and saved.');
+  } else if (_a7SuccessCount > 0) {
+    showToast('✓ ' + _a7SuccessCount + ' of 5 documents generated. ' + _a7FailedLabels.length + ' failed — click the card to retry.');
+  } else {
+    showToast('Document generation failed. Please check your connection and try again.');
+  }
+}
+
+async function streamA7Doc(key, prompt, outEl) {
+  var r = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      stream: true,
+      system: SYSTEM,
+      messages: [{role:'user', content: prompt}]
+    })
+  });
+  if (!r.ok) {
+    var errBody = await r.json().catch(function(){return {};});
+    throw new Error((errBody.error && errBody.error.message) || 'HTTP ' + r.status);
+  }
+  var reader = r.body.getReader();
+  var decoder = new TextDecoder();
+  var buffer = '', fullText = '';
+  if (outEl) outEl.textContent = '';
+  while (true) {
+    var result = await reader.read();
+    if (result.done) break;
+    buffer += decoder.decode(result.value, {stream: true});
+    var lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.startsWith('data: ')) {
+        var data = line.slice(6);
+        if (data === '[DONE]') break;
+        try {
+          var parsed = JSON.parse(data);
+          if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
+            fullText += parsed.delta.text;
+            if (outEl) outEl.textContent = fullText;
+          }
+        } catch(e) {}
+      }
+    }
+  }
+  return fullText;
+}
+
+// ════════════════════════════════════════════════════════
+// SEARCH DASHBOARD
+// ════════════════════════════════════════════════════════
+
+function getDash() {
+  if (!STATE.searchDashboard) {
+    STATE.searchDashboard = {companies:[], recruiters:[], interviews:[], boardDiscussions:[]};
+  }
+  return STATE.searchDashboard;
+}
+
+
+
+function getSavedVideoBrandMeta() {
+  try { return JSON.parse((STATE.savedOutputs||{})['6e_video_meta'] || '[]'); }
+  catch(e) { return []; }
+}
+
 function renderDashboardVideoSection() {
   var videos = getSavedVideoBrandMeta();
   var html = '<div class="dash-section" id="video-brand-section">';
