@@ -794,6 +794,20 @@ function navigateTo(id) {
   // Close mobile nav
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('nav-overlay').classList.remove('open');
+
+  // Dashboard is not in AGENTS — handle it before the AGENTS lookup
+  if (id === 'dashboard') {
+    document.getElementById('breadcrumbAgent').textContent = 'Command Center';
+    document.getElementById('agentTitle').textContent = 'Search Dashboard';
+    document.getElementById('agentSubtitle').textContent = 'Track your pipeline, companies, recruiters, and momentum.';
+    var body = document.getElementById('agentBody');
+    body.innerHTML = renderSearchDashboard();
+    attachDashboardEvents();
+    updateProgress();
+    body.scrollTop = 0;
+    return;
+  }
+
   var ag = AGENTS[id]; if (!ag) return;
   document.getElementById('breadcrumbAgent').textContent = id === 'dashboard' ? 'Command Center' : ag.number;
   document.getElementById('agentTitle').textContent = ag.title;
