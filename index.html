@@ -370,7 +370,7 @@ var currentUser = null;
 
 async function sbFetch(path, method, body) {
   method = method || 'GET';
-  var token = localStorage.getItem('sb_token') || SB_KEY;
+  var token = localStorage.getItem('ee_sb_token') || SB_KEY;
   var opts = {
     method: method,
     headers: {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+token,'Prefer':method==='POST'?'resolution=merge-duplicates,return=minimal':''}
@@ -416,9 +416,9 @@ async function authSignIn() {
     var uemail = d.user ? d.user.email : (d.email||email);
     if (!uid) throw new Error('Could not retrieve user ID.');
     currentUser = {id:uid,email:uemail,token:d.access_token};
-    localStorage.setItem('sb_token',d.access_token);
-    localStorage.setItem('sb_uid',uid);
-    localStorage.setItem('sb_email',uemail);
+    localStorage.setItem('ee_sb_token',d.access_token);
+    localStorage.setItem('ee_sb_uid',uid);
+    localStorage.setItem('ee_sb_email',uemail);
     document.getElementById('auth-modal').remove();
     updateUserUI();
     await loadCloudData();
@@ -442,9 +442,9 @@ async function authSignUp() {
     var uemail = d.user ? d.user.email : (d.email||email);
     if (d.access_token && uid) {
       currentUser = {id:uid,email:uemail,token:d.access_token};
-      localStorage.setItem('sb_token',d.access_token);
-      localStorage.setItem('sb_uid',uid);
-      localStorage.setItem('sb_email',uemail);
+      localStorage.setItem('ee_sb_token',d.access_token);
+      localStorage.setItem('ee_sb_uid',uid);
+      localStorage.setItem('ee_sb_email',uemail);
       document.getElementById('auth-modal').remove();
       updateUserUI();
       await loadCloudData();
@@ -457,9 +457,9 @@ async function authSignUp() {
         var uemail2 = d2.user ? d2.user.email : (d2.email||email);
         if (d2.access_token && uid2) {
           currentUser = {id:uid2,email:uemail2,token:d2.access_token};
-          localStorage.setItem('sb_token',d2.access_token);
-          localStorage.setItem('sb_uid',uid2);
-          localStorage.setItem('sb_email',uemail2);
+          localStorage.setItem('ee_sb_token',d2.access_token);
+          localStorage.setItem('ee_sb_uid',uid2);
+          localStorage.setItem('ee_sb_email',uemail2);
           document.getElementById('auth-modal').remove();
           updateUserUI();
           await loadCloudData();
@@ -490,7 +490,7 @@ function updateUserUI() {
 }
 
 async function signOut() {
-  localStorage.removeItem('sb_token'); localStorage.removeItem('sb_uid'); localStorage.removeItem('sb_email');
+  localStorage.removeItem('ee_sb_token'); localStorage.removeItem('ee_sb_uid'); localStorage.removeItem('ee_sb_email');
   currentUser = null; location.reload();
 }
 
@@ -520,7 +520,7 @@ async function loadCloudData() {
       'output_0':'0','output_0.75':'0.75','output_0b':'0b','output_0c':'0c',
       'output_0.5a':'0.5a','output_0.5b':'0.5b','output_1':'1','output_2':'2',
       'output_2.5':'2.5','output_6h':'6h','output_3a':'3a','output_3b':'3b','output_4a':'4a','output_5a':'5a','output_4b':'4b',
-      'output_6a':'6a','output_6b':'6b','output_6c':'6c','output_6d':'6d','output_6e':'6e',
+      'output_6a':'6a','output_6b':'6b','output_6c':'6c','output_6d':'6d','output_6e':'6e','output_6f':'6f','output_6g':'6g',
       // Individual deliverable keys saved by ☁ Save buttons
       'a0_career_capital_summary':'career_capital_summary',
       'a0_accomplishment_bank':'accomplishment_bank',
@@ -603,7 +603,7 @@ async function loadCloudData() {
       });
       // Mark agents as completed if we have their outputs
       if (!STATE.completedAgents) STATE.completedAgents = [];
-      var agentKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b'];
+      var agentKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b','6f','6g'];
       agentKeys.forEach(function(k) {
         if (STATE.savedOutputs && STATE.savedOutputs[k] &&
             STATE.completedAgents.indexOf(k) === -1) {
@@ -779,7 +779,7 @@ function startApp() {
   // Navigate to last page client was on
   var targetAgent = '0';
   if (STATE.assessmentResult) {
-    var validKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b','dashboard'];
+    var validKeys = ['0','0.75','6d','0b','0c','0.5a','0.5b','6e','1','6a','2','6b','2.5','6h','3a','6c','3b','4a','5a','4b','6f','6g','dashboard'];
     var saved = STATE.currentAgent;
     if (saved && validKeys.indexOf(saved) > -1) {
       targetAgent = saved;
@@ -909,7 +909,7 @@ function renderAgent0() {
     }
     html += '<div class="input-hint">'+inp.hint+'</div><textarea id="inp_0_'+inp.id+'" rows="'+inp.rows+'" onchange="autoSaveInput(\'0\',\''+inp.id+'\')" onblur="autoSaveInput(\'0\',\''+inp.id+'\')">'+saved+'</textarea></div>';
   });
-  html += '<button class="btn-generate" id="btnGen_0" onclick="generateAgent0()"><span>Generate Career Capital Assessment</span></button></div></div>';
+  html += '<button class="btn-generate gold" id="btnGen_0" onclick="generateAgent0()"><span>Generate Career Capital Assessment</span></button></div></div>';
   html += '<div class="divider-gold"></div>';
   // Restore interpretation guide if previously generated
   if (isDone && STATE.interpretationGuide) {
@@ -1091,6 +1091,7 @@ function renderAgent0C() {
   html += '<div class="input-section"><div class="input-label">Top 3 Value Propositions</div><div class="input-hint">The three most powerful things you bring to an organization.</div><textarea id="inp_0c_value" rows="4" onchange="autoSaveInput(\'0c\',\'value\')" onblur="autoSaveInput(\'0c\',\'value\')">'+escHtml((STATE.savedInputs||{})['0c_value']||'')+'</textarea></div>';
   html += '<div class="input-section"><div class="input-label">LinkedIn Audience Priority</div><div class="input-hint"><strong>Executive Recruiters</strong>, <strong>Board Members</strong>, <strong>PE/VC Investors</strong>, <strong>C-Suite Peers</strong>, or <strong>All equally</strong>.</div><textarea id="inp_0c_audience" rows="1" onchange="autoSaveInput(\'0c\',\'audience\')" onblur="autoSaveInput(\'0c\',\'audience\')">'+escHtml((STATE.savedInputs||{})['0c_audience']||'All equally')+'</textarea></div>';
   html += '<div class="input-section"><div class="input-label">Featured Section Content (Optional)</div><div class="input-hint">Articles, posts, media coverage, or external links to feature.</div><textarea id="inp_0c_featured" rows="3" onchange="autoSaveInput(\'0c\',\'featured\')" onblur="autoSaveInput(\'0c\',\'featured\')">'+escHtml((STATE.savedInputs||{})['0c_featured']||'')+'</textarea></div>';
+  html += '<div class="input-section" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="input-label">Resume Override <span style="font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0">(Optional — use if you hit a context or length error)</span></div><div class="input-hint">If generation fails, paste a condensed 1–2 page resume here. This overrides the auto-loaded resume for this agent only and saves automatically.</div><textarea id="inp_0c_resumeOverride" rows="5" placeholder="Paste a shorter resume here only if needed..." onchange="autoSaveInput(\'0c\',\'resumeOverride\')" onblur="autoSaveInput(\'0c\',\'resumeOverride\')">'+escHtml((STATE.savedInputs||{})['0c_resumeOverride']||'')+'</textarea></div>';
   html += '<button class="btn-generate gold" id="btnGen_0c" onclick="generateAgent0C()" '+((resume||optimizedResume)?'':'disabled')+'><span>Generate Complete LinkedIn Profile</span></button>';
   html += '<div class="divider-gold"></div>';
   html += '<div class="output-section"><div class="output-header"><div class="output-label">Agent 4 Output — Complete LinkedIn Profile</div><div class="output-actions"><button class="btn-action" onclick="copyOutput(\'0c\')">⎘ Copy</button><button class="btn-action" onclick="dlOutput(\'0c\',\'Agent_0C_LinkedIn_Profile\')">↓ Download .doc</button><button class="btn-action" onclick="saveOutputToCloud(\'0c\')" title="Save to cloud">☁ Save</button></div></div>';
@@ -1116,7 +1117,7 @@ function renderAgent6E() {
   var html = '';
 
   // ── Explanation: what this is, why it matters, how to use it ──
-  html += '<div class="context-panel"><span class="context-icon">◆</span><div class="context-text"><strong>Optional Track — Executive Video & Visual Brand.</strong> More retained search firms and hiring companies now request a short video introduction before — or instead of — a first call, and a dated headshot or unscripted video can quietly undercut an otherwise strong candidacy. This agent does three things: writes you a video script and on-camera coaching tailored to your background, lets you record that video right here using your camera and microphone, and scores each take with specific, actionable feedback so you can re-record until it is genuinely ready to send. When you have a take you are happy with, download it or save it to the cloud — it will show up on your Search Dashboard, ready to send to a recruiter the moment one asks.</div></div>';
+  html += '<div class="context-panel"><span class="context-icon">◆</span><div class="context-text"><strong>Optional Track — Executive Video &amp; Visual Brand.</strong> This agent does three things: writes you a video script and on-camera coaching tailored to your background, lets you record that video right here using your camera and microphone, and scores each take with specific, actionable feedback so you can re-record until it is genuinely ready to send.<br><br><strong>Why it matters:</strong> More retained search firms and hiring companies now request a short video introduction before — or instead of — a first call, and a dated headshot or unscripted video can quietly undercut an otherwise strong candidacy. Search firms and boards increasingly use video as a first-pass filter before they ever pick up the phone, so a polished, well-coached introduction gets you further into a process than a resume alone.<br><br><strong>What you need to do:</strong> Generate your script and coaching notes first, and review them until the framing feels natural to say out loud. Preview your camera and microphone, record a take, and read the scored debrief carefully — it is broken into Content, Structure &amp; Pacing, Verbal Delivery, and Visual Presence. Re-record as many times as it takes. When you have a take you are happy with, download it or save it to the cloud — it will show up on your Search Dashboard, ready to send to a recruiter the moment one asks.</div></div>';
 
   html += '<div class="gateway-section"><div class="gateway-header"><span class="gateway-step-badge">1</span><span class="gateway-header-text">Generate Your Script &amp; Coaching Notes</span></div><div class="gateway-body">';
   html += '<div class="gateway-desc">Answer a few questions and Claude will write a complete 60–90 second script, delivery coaching calibrated to your comfort level, a technical setup checklist, a headshot/banner audit, and guidance on where to use the finished video.</div>';
@@ -2081,7 +2082,11 @@ function renderAgent3A() {
 
   // Carry forward
   var ccsReady = !!(a0Text('career_capital_summary') || STATE.savedOutputs['0']);
-  html += '<div class="carry-forward-box"><div class="carry-title">Bring These With You</div><div class="carry-item"><span style="color:var(--gold);flex-shrink:0">▸</span><span>' + (ccsReady ? '<strong>Agent 10 — Interview Intelligence and Live Mock Interview.</strong> At the executive level, the interview is not an assessment of whether you can do the job — it is assumed you can. The interview assesses whether you are the right leader for this board, this team, and this specific business challenge at this specific moment. Executives who win competitive finalist processes arrive with precision intelligence about the company situation and demonstrate genuine insight into the board’s priorities.<br><br>Why it matters: Executive interview panels include board members, sitting executives, compensation committee members, and external advisors — each evaluating something different. This agent produces a complete intelligence brief covering every evaluator’s likely concerns, 15 predicted questions with coached frameworks, and a live mock interview with AI feedback on delivery, presence, and content quality.<br><br>What to do: Fill in everything you know about the company and the interviewers before generating. Read the full output at least twice. Use the live mock interview for every finalist-stage interview — the per-answer coaching feedback is the most actionable output in this agent.' : 'Complete <strong>Agent 1 — Career Capital Assessment</strong> first, then return here. Your CCS will auto-populate.') + '</span></div></div>';
+  if (ccsReady) {
+    html += '<div class="carry-forward-box"><div class="carry-title">Career Capital Summary — Loaded from Agent 1</div><div class="carry-item"><span style="color:var(--gold);flex-shrink:0">▸</span><span>Your Career Capital Summary is feeding this agent automatically. It will be used to tailor predicted questions, coached answer frameworks, and objection handling to your specific background and target role.</span></div></div>';
+  } else {
+    html += '<div class="carry-forward-box" style="border-left-color:var(--text-muted)"><div class="carry-title">Career Capital Summary — Not Yet Available</div><div class="carry-item"><span style="color:var(--text-muted);flex-shrink:0">◇</span><span>Complete <strong>Agent 1 — Career Capital Assessment</strong> first, then return here. Your CCS will auto-populate and significantly sharpen the evaluator-by-evaluator analysis.</span></div></div>';
+  }
 
   // Step 1 - Intelligence Brief inputs
   html += '<div class="gateway-section"><div class="gateway-header"><span class="gateway-step-badge">Step 1</span><span class="gateway-header-text">Generate Your Interview Intelligence Brief</span></div><div class="gateway-body">';
@@ -2122,7 +2127,7 @@ function renderAgent3A() {
     html += '<div class="input-hint">'+inp.hint+'</div><textarea id="inp_3a_'+inp.id+'" rows="'+inp.rows+'" data-agent="3a" data-field="'+inp.id+'" onchange="a3aAutoSave(this)" onblur="a3aAutoSave(this)">'+escHtml(saved)+'</textarea></div>';
   });
 
-  html += '<button class="btn-generate" id="btnGen_3a" onclick=\'generate3ABrief()\'><span>Generate Interview Intelligence Brief</span></button>';
+  html += '<button class="btn-generate gold" id="btnGen_3a" onclick=\'generate3ABrief()\'><span>Generate Interview Intelligence Brief</span></button>';
   html += '<div class="divider-gold"></div>';
   html += '<div class="output-section"><div class="output-header"><div class="output-label">Interview Intelligence Brief</div><div class="output-actions"><button class="btn-action" onclick="copyOutput(\'3a\')">⎘ Copy</button><button class="btn-action" onclick="dlOutput(\'3a\',\'Agent_3A_Interview_Intelligence\')">↓ Download .doc</button><button class="btn-action" onclick="saveOutputToCloud(\'3a\')" title="Save to cloud">☁ Save</button></div></div>';
   html += '<div class="output-box" id="output_3a">'+(savedOut?'<span>'+escHtml(savedOut)+'</span>':'<span class="output-placeholder">Complete the fields above and click Generate.</span>')+'</div></div>';
@@ -2158,10 +2163,10 @@ function renderAgent3A() {
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (!hasSpeech) {
-    html += '<div style="background:rgba(184,151,58,0.1);border:1px solid rgba(184,151,58,0.4);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--gold-light)">&#9888; Live transcription requires Google Chrome or Microsoft Edge. Camera recording and AI debrief will still work in your current browser.</div>';
+    html += '<div style="background:#FFF8EC;border:1px solid rgba(184,151,58,0.4);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#8A6E26">&#9888; Live transcription requires Google Chrome or Microsoft Edge. Camera recording and AI debrief will still work in your current browser.</div>';
   }
   if (isIOS) {
-    html += '<div style="background:rgba(184,151,58,0.1);border:1px solid rgba(184,151,58,0.4);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--gold-light)">&#9888; On iPhone/iPad, the interviewer voice may not speak automatically. Tap the screen once before starting your interview to enable audio, or use a laptop for the best experience.</div>';
+    html += '<div style="background:#FFF8EC;border:1px solid rgba(184,151,58,0.4);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#8A6E26">&#9888; On iPhone/iPad, the interviewer voice may not speak automatically. Tap the screen once before starting your interview to enable audio, or use a laptop for the best experience.</div>';
   }
 
   // Camera setup panel - preview before recording starts
@@ -2321,7 +2326,7 @@ function renderAgentBody(id, ag) {
   }
   var EE_CTX = {
     '0.5a': 'Agent 5 — Departure Narrative. The departure narrative is the single most consequential piece of positioning in an executive search — and the one most executives get wrong. Why you left your last role is the first thing a retained search firm assesses, the first thing a board compensation committee will probe, and the filter through which every subsequent answer in the process is heard. A weak, inconsistent, or over-explained departure story ends candidacies before they begin — often without the executive ever knowing why.<br><br><strong>Why it matters at the executive level:</strong> Executives are held to a higher standard of narrative clarity than any other candidate level. A CFO who says it was time for a change invites skepticism. A CEO who was pushed out during a restructuring needs a version of that story that is honest, confident, and forward-focused — not defensive, not over-explained, and consistent with what every reference will corroborate. One inconsistency between your narrative and a reference account can kill a finalist candidacy.<br><br><strong>What you need to do:</strong> Answer every field honestly — this information is for strategy only. The more accurate your input about what actually happened, the more effective the narrative the agent produces. After generating, practice the primary narrative aloud until it sounds natural. Test it with someone who will push back. Run it past your coach before it goes to any search firm.',
-    '0.5b': 'Agent 6 — Digital Reputation Audit. Before a retained search firm submits your name to a client, before a board compensation committee evaluates your candidacy, before a hiring CEO looks you up after a referral — they will search you online. What they find in the first two pages of Google results shapes an impression your resume and interview performance must then confirm or overcome. Most executives have not seriously audited their own digital footprint in years, and some have news coverage, governance records, or litigation that they have not thought about.<br><br><strong>Why it matters at the executive level:</strong> At the C-suite and board level, digital due diligence is thorough, systematic, and conducted by professionals who know exactly where to look. Search firms run full background assessments before presenting candidates. Boards conduct independent research before extending offers. Governance issues, proxy fight coverage, negative press, and social media activity are all surfaced — often before you know you are being evaluated. You cannot manage what you have not found yourself first.<br><br><strong>What you need to do:</strong> Complete the manual self-audit before running this agent. Open a private browser window. Search your full name in quotes on Google and review the first two pages. Review your LinkedIn profile as a non-connection would see it. Check your social media activity from the past two years. Describe what you find honestly — the more specific your input, the more actionable the output.',
+    '0.5b': 'Agent 6 — Digital Reputation Audit. Before a retained search firm submits your name to a client, before a board compensation committee evaluates your candidacy, before a hiring CEO looks you up after a referral — they will search you online. What they find in the first two pages of Google results shapes an impression your resume and interview performance must then confirm or overcome. Most executives have not seriously audited their own digital footprint in years, and some have news coverage, governance records, or litigation that they have not thought about.<br><br><strong>Why it matters at the executive level:</strong> At the C-suite and board level, digital due diligence is thorough, systematic, and conducted by professionals who know exactly where to look. Search firms run full background assessments before presenting candidates. Boards conduct independent research before extending offers. Governance issues, proxy fight coverage, negative press, and social media activity are all surfaced — often before you know you are being evaluated. You cannot manage what you have not found yourself first.<br><br><strong>What you need to do:</strong> Complete the manual self-audit before running this agent. Start by opening a private browsing window — this is a special mode in your browser that does not use your saved login sessions or search history, so you see exactly what a stranger searching your name sees rather than a personalized view. To open one: in Chrome, press Ctrl+Shift+N (Windows) or Cmd+Shift+N (Mac); in Safari, go to File → New Private Window; in Edge, press Ctrl+Shift+N; in Firefox, press Ctrl+Shift+P (Windows) or Cmd+Shift+P (Mac). In that private window, search your full name in quotes on Google and review the first two pages of results. Then search your name plus your most recent company and your name plus your most recent title. Review your LinkedIn profile as a non-connection would see it — log out of LinkedIn first, then search your name. Check your social media activity from the past two years on any platform where your profile is public. Describe what you find honestly — the more specific your input, the more actionable the output.',
     '1': 'Agent 7 — Market Intelligence and Positioning. Most executive candidates approach the market reactively — they wait for postings, accept recruiter calls, and respond to whatever comes to them. The executives who find the right roles fastest identify where demand is forming before they enter the market: which companies are at an inflection point creating C-suite demand, which sectors are actively building leadership teams, which search firms handle their function at their level, and which of their relationships are proximate to the opportunities they want.<br><br><strong>Why it matters at the executive level:</strong> Seventy to eighty percent of senior executive roles are filled through direct search firm engagement or personal referral — not through posted positions. The executives who get considered for those roles are already visible to the right search professionals before the search launches. Market intelligence is not optional at the executive level — it is the difference between being positioned and being reactive. The intelligence this agent produces is the foundation for every outreach and relationship conversation that follows.<br><br><strong>What you need to do:</strong> Fill every field with specificity. Name the specific sectors, company stages, geographies, and organizational types you are targeting. Describe the business problems you are most often hired to solve. The more specific your inputs, the more actionable the intelligence the agent returns. Use the output to shape your Agent 9 outreach and your recruiter relationship conversations.',
     '6a': 'Agent 8 — Compensation Benchmarking. The most common mistake executives make in compensation negotiation is entering it too late — after an offer is on the table, under time pressure, without a clear and defensible baseline. Executives who know their full market value before a first search firm call can position themselves correctly from the opening of every conversation. Those who discover their market value at the offer stage are negotiating reactively and typically leave significant money behind.<br><br><strong>Why it matters at the executive level:</strong> Executive compensation at the C-suite level has seven to ten negotiable components — base salary, short-term incentive target, long-term incentive structure, severance provisions, signing bonus, benefits, change-of-control protections, and non-compete scope. Most executives negotiate only the base. This agent produces a full compensation architecture across every component, calibrated to your specific role, sector, company stage, and geography — giving you a defensible basis for negotiating the entire package.<br><br><strong>What you need to do:</strong> Run this agent before your first substantive conversation with any search firm — not when an offer arrives. Fill in your current total compensation in complete detail including equity value and incentive history, so the agent can identify precisely where you are relative to the market and where you are leaving value on the table.',
     '2': 'Agent 9 — Demand Creation and Outreach. At the executive level, demand creation is not submitting applications — it is engineering conversations with the right people before a search is launched. The executives who get the best outcomes are already in conversation with the right retained search professionals, visible in the right board rooms, and being referred by trusted colleagues before a role is even defined. This agent builds the outreach infrastructure: the Executive Value Proposition that positions you for the right opportunities, and the specific outreach materials for search firms, direct company contacts, and your board-level network.<br><br><strong>Why it matters at the executive level:</strong> Retained search firms receive hundreds of resumes for every search. The executives they present to clients are not those who sent the best cold submission — they are those known to the search partner before the search launched, who came through a trusted referral, or who were positioned as exactly the right profile for the specific business challenge at hand. Demand creation at the executive level is relationship engineering, not application management.<br><br><strong>What you need to do:</strong> Do not skip Agent 7 (Market Intelligence) before running this agent. Be specific about your target company profile, geographic preferences, and the business problems you most distinctively solve. After generating, review the Executive Value Proposition with your coach before it goes to any search firm contact. Generic positioning produces generic outreach that search professionals recognize and discount.',
@@ -2530,19 +2535,7 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
 
   var _eeCtrl = new AbortController();
   // Agent 1 (Career Capital Assessment) produces 5 deliverables and needs more time
-  var _eeTimeoutMap = {
-    '0':    180000,  // Agent 1  — Career Capital Assessment (3 min)
-    '0.75': 240000,  // Agent 2  — Options Analysis (4 min)
-    '0b':   240000,  // Agent 3  — Resume Intelligence (4 min)
-    '0c':   240000,  // Agent 4  — LinkedIn Profile (4 min)
-    '1':    180000,  // Agent 7  — Market Intelligence (3 min)
-    '2.5':  180000,  // Agent 10 — Job Application Engine (3 min)
-    '3a':   180000,  // Agent 12 — Interview Intelligence (3 min)
-    '5a':   180000,  // Agent 17 — LinkedIn Articles — large output (3 min)
-    '4b':   180000,  // Agent 18 — Onboarding Intelligence — large output (3 min)
-    '6d':   180000,  // Agent 19 — Board Readiness — large output (3 min)
-  };
-  var _eeTimeoutMs = _eeTimeoutMap[id] || 120000; // default 2 min
+  var _eeTimeoutMs = (id === '0') ? 240000 : (id === '3a') ? 180000 : 90000; // Agent 1=4min, Agent 12=3min (largest output), others=90s
   var _eeTimeout = setTimeout(function(){ _eeCtrl.abort(); }, _eeTimeoutMs);
   try {
     var r = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
@@ -2567,6 +2560,7 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
     var decoder = new TextDecoder();
     var buffer = '';
     var fullText = '';
+    var sawMessageStop = false;
 
     if (out) { out.innerHTML = '<span></span>'; }
     var textSpan = out ? out.querySelector('span') : null;
@@ -2581,16 +2575,29 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
         var line = lines[i];
         if (line.startsWith('data: ')) {
           var data = line.slice(6);
-          if (data === '[DONE]') break;
           try {
             var parsed = JSON.parse(data);
             if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
               fullText += parsed.delta.text;
               if (textSpan) textSpan.textContent = fullText;
+            } else if (parsed.type === 'message_stop') {
+              sawMessageStop = true;
+            } else if (parsed.type === 'error') {
+              throw new Error((parsed.error && parsed.error.message) || 'The model reported an error mid-stream.');
             }
-          } catch(e) {}
+          } catch(e) {
+            if (!(e instanceof SyntaxError)) throw e;
+          }
         }
       }
+    }
+
+    if (!sawMessageStop) {
+      var partialNote = fullText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(fullText) + '</div>' : '';
+      if (out) out.innerHTML = '<div class="error-box"><strong>The connection was interrupted before the response finished generating.</strong> Click Generate again — a second attempt usually succeeds.' + partialNote + '</div>';
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
+      clearTimeout(_eeTimeout);
+      return;
     }
 
     // Save output
@@ -2750,7 +2757,7 @@ async function generateAgent0B() {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       var reader = r.body.getReader();
       var decoder = new TextDecoder();
-      var buffer = '', fullText = '';
+      var buffer = '', fullText = '', sawMessageStop = false;
       if (out) out.innerHTML = '<div style="font-size:11px;color:var(--gold-dark);font-weight:600;letter-spacing:.08em;margin-bottom:8px">BUILDING: ' + escHtml(pname) + '</div><span id="ob-stream-' + pathKey + '"></span>';
       var span = document.getElementById('ob-stream-' + pathKey);
       while (true) {
@@ -2761,15 +2768,24 @@ async function generateAgent0B() {
         for (var li = 0; li < lines.length; li++) {
           var line = lines[li];
           if (!line.startsWith('data: ')) continue;
-          var data = line.slice(6); if (data === '[DONE]') break;
+          var data = line.slice(6);
           try {
             var parsed = JSON.parse(data);
             if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
               fullText += parsed.delta.text;
               if (span) span.textContent = fullText;
+            } else if (parsed.type === 'message_stop') {
+              sawMessageStop = true;
+            } else if (parsed.type === 'error') {
+              throw new Error((parsed.error && parsed.error.message) || 'The model reported an error mid-stream.');
             }
-          } catch(pe) {}
+          } catch(pe) { if (!(pe instanceof SyntaxError)) throw pe; }
         }
+      }
+      if (!sawMessageStop) {
+        var errOb = new Error('The connection was interrupted before the resume for "' + pname + '" finished generating. Click Generate again — a second attempt usually succeeds.');
+        errOb.partialText = fullText;
+        throw errOb;
       }
       if (fullText) {
         allOutputs[pathKey] = fullText;
@@ -2777,7 +2793,7 @@ async function generateAgent0B() {
         if (!firstOutput) firstOutput = fullText;
       }
     } catch(e) {
-      allOutputs[pathKey] = 'Error generating resume for path "' + pname + '": ' + e.message;
+      allOutputs[pathKey] = 'Error generating resume for path "' + pname + '": ' + e.message + (e.partialText ? '\n\n[Partial output received before interruption:]\n' + e.partialText : '');
     }
   }
 
@@ -2808,12 +2824,36 @@ async function generateAgent0C() {
   var value = getInp('0c','value');
   var audience = getInp('0c','audience')||'All equally';
   var featured = getInp('0c','featured');
-  var sourceResume = optimizedResume || resume;
+  var resumeOverride = (getInp('0c','resumeOverride')||'').trim();
+
+  // Priority: manual override > optimized resume > original resume
+  var sourceResume = resumeOverride || optimizedResume || resume;
   if (!sourceResume) { out.innerHTML = '<div class="error-box">No resume found. Complete Agent 3 (Resume Intelligence) first — your optimized resume from Agent 3 feeds the LinkedIn profile builder. If you have not yet run Agent 3, paste your resume into Agent 1 Step 3 and generate your Career Capital Assessment first.</div>'; return; }
   if (!targetrole) { out.innerHTML = '<div class="error-box">Please enter your target role and industries before generating.</div>'; return; }
+
+  // Trim large inputs to prevent context errors — LinkedIn profile needs highlights, not every word
+  var RESUME_LIMIT = 4000;
+  var CCS_LIMIT = 2000;
+  var resumeTrimmed = sourceResume.length > RESUME_LIMIT;
+  var ccsTrimmed = ccs.length > CCS_LIMIT;
+  var resumeForPrompt = resumeTrimmed ? sourceResume.slice(0, RESUME_LIMIT) : sourceResume;
+  var ccsForPrompt    = ccsTrimmed    ? ccs.slice(0, CCS_LIMIT)             : ccs;
+
+  if (resumeTrimmed || ccsTrimmed) {
+    var existingWarn = document.getElementById('0c-trim-warning');
+    if (!existingWarn) {
+      var warnEl = document.createElement('div');
+      warnEl.id = '0c-trim-warning';
+      warnEl.style.cssText = 'background:#fff8e7;border:1px solid #B8973A;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6B4F00';
+      warnEl.innerHTML = '<strong>Note:</strong> Your ' + (resumeTrimmed ? 'resume' : '') + (resumeTrimmed && ccsTrimmed ? ' and ' : '') + (ccsTrimmed ? 'Career Capital Summary' : '') + ' ' + (resumeTrimmed && ccsTrimmed ? 'were' : 'was') + ' trimmed to avoid a context error. The most important content is still included. If the output misses something critical, paste a condensed resume into the <strong>Resume Override</strong> field below and regenerate.';
+      btn.parentNode.insertBefore(warnEl, btn);
+    }
+  }
+
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div><span>Building your complete LinkedIn profile...</span>';
   out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
-  var prompt = 'Act as my LinkedIn Profile Intelligence Agent.\n\nWrite my complete LinkedIn profile optimized for the algorithm, ATS systems, executive recruiters, and board audiences.\n\n'+(optimizedResume?'MY OPTIMIZED RESUME:\n'+optimizedResume+'\n\n':'MY RESUME:\n'+resume+'\n\n')+(ccs?'MY CAREER CAPITAL SUMMARY:\n'+ccs+'\n\n':'')+'TARGET ROLE: '+targetrole+'\n'+(value?'VALUE PROPOSITIONS:\n'+value+'\n\n':'')+'AUDIENCE PRIORITY: '+audience+'\n'+(featured?'FEATURED CONTENT:\n'+featured+'\n\n':'')+'\nProduce all 7 sections: HEADLINE, ABOUT, EXPERIENCE ENTRIES, SKILLS (top 20), FEATURED SECTION GUIDANCE, LINKEDIN SUMMARY CARD, ALGORITHM AND VISIBILITY NOTES. Every section copy-and-paste ready.';
+  var resumeLabel = resumeOverride ? 'RESUME (manually provided)' : (optimizedResume ? 'MY OPTIMIZED RESUME (from Agent 3)' : 'MY RESUME');
+  var prompt = 'Act as my LinkedIn Profile Intelligence Agent.\n\nWrite my complete LinkedIn profile optimized for the algorithm, ATS systems, executive recruiters, and board audiences.\n\n' + resumeLabel + ':\n' + resumeForPrompt + '\n\n' + (ccsForPrompt ? 'MY CAREER CAPITAL SUMMARY:\n' + ccsForPrompt + '\n\n' : '') + 'TARGET ROLE: ' + targetrole + '\n' + (value ? 'VALUE PROPOSITIONS:\n' + value + '\n\n' : '') + 'AUDIENCE PRIORITY: ' + audience + '\n' + (featured ? 'FEATURED CONTENT:\n' + featured + '\n\n' : '') + '\nProduce all 7 sections: HEADLINE, ABOUT, EXPERIENCE ENTRIES, SKILLS (top 20), FEATURED SECTION GUIDANCE, LINKEDIN SUMMARY CARD, ALGORITHM AND VISIBILITY NOTES. Every section copy-and-paste ready.';
   await callClaudeWithMsgs('0c',[{role:'user',content:prompt}],prompt,btn,'Generate Complete LinkedIn Profile','Agent_4_LinkedIn_Profile');
 }
 
@@ -2846,18 +2886,76 @@ async function generateReport(scores, name, reportBtn) {
   reportOut.textContent = ''; reportOut.classList.add('streaming-cursor');
   var scoreText = buildScoreIntakeForm(scores, name);
   var reportPrompt = 'I am a career coach. Below is the completed Career Capital Assessment Suite Score Intake Form for a client. Generate a plain-English assessment report.\n\nREPORT REQUIREMENTS:\n1. Write entirely in plain English. No psychological jargon.\n2. Be direct and specific to this client\'s scores.\n3. Include specific job search applications for every insight.\n6. Use the client\'s first name throughout.\n\nREPORT STRUCTURE: SECTION 1: THE BIG PICTURE | SECTION 2: YOUR CORE EXECUTIVE STRENGTHS (top 2-3 from Assessment I) | SECTION 3: SKILLS THAT TRAVEL WITH YOU (top 2-3 from Assessment II) | SECTION 4: WHAT YOU VALUE AND HOW YOU LEAD (top 2-3 from Assessment III) | SECTION 5: YOUR LEADERSHIP PRESENCE (top 2-3 from Assessment IV — do NOT use terms EI, EQ, or Emotional Intelligence) | SECTION 6: YOUR DEVELOPMENT EDGE (lowest 1-2 scores) | SECTION 7: HOW TO USE THIS IN YOUR SEARCH (3 numbered actions)\n\nCLIENT LEVEL: C-suite / VP executive. Peer-to-peer tone.\n\nSCORE INTAKE FORM:\n'+scoreText;
+
+  var _rptCtrl = new AbortController();
+  var _rptTimeout = setTimeout(function(){ _rptCtrl.abort(); }, 240000);
   try {
-    var r = await fetch('https://anthropic-proxy.cssceo.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,system:'You are an expert career coach generating a personal assessment report. Write in warm, direct, peer-to-peer professional language. Be specific to the scores provided.',messages:[{role:'user',content:reportPrompt}]})});
-    var d = await r.json();
-    if (d.error) { reportOut.classList.remove('streaming-cursor'); reportOut.innerHTML = '<div class="error-box">Error generating report. Please try again.</div>'; }
-    else {
-      var text = d.content.map(function(b){return b.text||'';}).join('');
-      reportOut.classList.remove('streaming-cursor'); reportOut.textContent = text;
-      STATE.reportText = text; saveState();
-      reportBtn.innerHTML = '<span>✓ Report Generated — Download Below</span>';
-      document.getElementById('ea-report-dl-btn').style.display = 'inline-flex';
+    var r = await fetch('https://anthropic-proxy.cssceo.workers.dev',{
+      method:'POST',
+      signal: _rptCtrl.signal,
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:8000,
+        stream:true,
+        system:'You are an expert career coach generating a personal assessment report. Write in warm, direct, peer-to-peer professional language. Be specific to the scores provided.',
+        messages:[{role:'user',content:reportPrompt}]
+      })
+    });
+    if (!r.ok) {
+      var errBody = await r.json().catch(function(){return {};});
+      throw new Error((errBody.error && errBody.error.message) || 'HTTP ' + r.status);
     }
-  } catch(e) { reportOut.classList.remove('streaming-cursor'); reportOut.innerHTML = '<div class="error-box">Connection error. Please try again.</div>'; reportBtn.disabled = false; reportBtn.innerHTML = '<span>Generate My Career Capital Report</span>'; return; }
+    var reader = r.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '', fullText = '', sawMessageStop = false;
+    reportOut.innerHTML = '<span id="ea-report-stream"></span>';
+    var reportSpan = document.getElementById('ea-report-stream');
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+      buffer += decoder.decode(result.value, {stream: true});
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (!line.startsWith('data: ')) continue;
+        var data = line.slice(6);
+        try {
+          var parsed = JSON.parse(data);
+          if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
+            fullText += parsed.delta.text;
+            if (reportSpan) reportSpan.textContent = fullText;
+          } else if (parsed.type === 'message_stop') {
+            sawMessageStop = true;
+          } else if (parsed.type === 'error') {
+            throw new Error((parsed.error && parsed.error.message) || 'The model reported an error mid-stream.');
+          }
+        } catch(pe) { if (!(pe instanceof SyntaxError)) throw pe; }
+      }
+    }
+    reportOut.classList.remove('streaming-cursor');
+    if (!sawMessageStop) {
+      var partialRpt = fullText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(fullText) + '</div>' : '';
+      reportOut.innerHTML = '<div class="error-box"><strong>The connection was interrupted before your report finished generating.</strong> Click Generate again — a second attempt usually succeeds.' + partialRpt + '</div>';
+      reportBtn.disabled = false;
+      reportBtn.innerHTML = '<span>Generate My Career Capital Report</span>';
+      clearTimeout(_rptTimeout);
+      return;
+    }
+    reportOut.textContent = fullText;
+    STATE.reportText = fullText; saveState();
+    reportBtn.innerHTML = '<span>✓ Report Generated — Download Below</span>';
+    document.getElementById('ea-report-dl-btn').style.display = 'inline-flex';
+  } catch(e) {
+    reportOut.classList.remove('streaming-cursor');
+    var errMsg = (e.name === 'AbortError') ? 'Generation timed out. Click Generate again — a second attempt usually succeeds.' : ('Connection error. Please try again.<br><br>' + escHtml(e.message));
+    reportOut.innerHTML = '<div class="error-box">' + errMsg + '</div>';
+    reportBtn.disabled = false; reportBtn.innerHTML = '<span>Generate My Career Capital Report</span>';
+    clearTimeout(_rptTimeout);
+    return;
+  }
+  clearTimeout(_rptTimeout);
   reportBtn.disabled = false;
 }
 
@@ -3915,9 +4013,15 @@ function generate3ABrief() {
   });
   if (!ok) { out.innerHTML = '<div class="error-box">Please complete Company Name and Job Description to generate your brief — every other field is optional.</div>'; return; }
   saveState();
+
+  // Trim large inputs to prevent context errors and timeouts on this heavy prompt
+  var jd       = inputs.jd.length       > 3000 ? inputs.jd.slice(0,3000)       + '\n[JD trimmed for length — key requirements above are sufficient]' : inputs.jd;
+  var ccs      = (inputs.ccs||'').length > 1500 ? inputs.ccs.slice(0,1500)                                                                            : (inputs.ccs||'');
+  var research = (inputs.compresearch||'').length > 2000 ? inputs.compresearch.slice(0,2000) + '\n[Research trimmed]'                                   : (inputs.compresearch||'None');
+
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div><span>Generating...</span>';
   out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
-  var prompt = 'Act as my Company & Interview Intelligence Agent.\n\nCompany: '+inputs.company+'\nCareer Capital Summary: '+(inputs.ccs||'Not provided — use the job description and company context to infer relevant positioning.')+'\nInterviewers: '+(inputs.interviewers||'Not yet known — provide general guidance for adapting to a typical panel for this type of role.')+'\nResearch: '+(inputs.compresearch||'None')+'\nFormat: '+(inputs.format||'Not specified — assume a standard multi-round executive interview process.')+'\n\nJob Description:\n'+inputs.jd+'\n\nProduce:\n1. Business situation summary.\n2. Strategic priorities and why this hire matters now.\n3. For each interviewer (or, if none provided, for the likely panel composition): background/role, likely concerns, how to adapt.\n4. 15 predicted questions with coached answers.\n5. 8 strategic questions for me to ask.\n6. Objections I am likely to face and how to address each.\n7. Closing statement.\n\nThen produce a MOCK INTERVIEW section with exactly 7 questions labeled MOCK Q1 through MOCK Q7 — a mix of behavioral, strategic, and objection-based questions specific to this company and role.';
+  var prompt = 'Act as my Company & Interview Intelligence Agent.\n\nCompany: '+inputs.company+'\nCareer Capital Summary: '+(ccs||'Not provided — use the job description and company context to infer relevant positioning.')+'\nInterviewers: '+(inputs.interviewers||'Not yet known — provide general guidance for adapting to a typical panel for this type of role.')+'\nResearch: '+research+'\nFormat: '+(inputs.format||'Not specified — assume a standard multi-round executive interview process.')+'\n\nJob Description:\n'+jd+'\n\nProduce:\n1. Business situation summary.\n2. Strategic priorities and why this hire matters now.\n3. For each interviewer (or, if none provided, for the likely panel composition): background/role, likely concerns, how to adapt.\n4. 15 predicted questions with coached answers.\n5. 8 strategic questions for me to ask.\n6. Objections I am likely to face and how to address each.\n7. Closing statement.\n\nThen produce a MOCK INTERVIEW section with exactly 7 questions labeled MOCK Q1 through MOCK Q7 — a mix of behavioral, strategic, and objection-based questions specific to this company and role.';
   callClaudeWithMsgs('3a',[{role:'user',content:prompt}],prompt,btn,'Generate Interview Intelligence Brief','Agent_3A_Interview_Intelligence');
 }
 
@@ -4369,6 +4473,7 @@ async function generateMockDebrief() {
     var decoder = new TextDecoder();
     var buffer  = '';
     var fullText = '';
+    var sawMessageStop = false;
     textEl.classList.remove('streaming-cursor');
     textEl.textContent = '';
 
@@ -4382,15 +4487,25 @@ async function generateMockDebrief() {
         var line = sseLines[li];
         if (!line.startsWith('data: ')) continue;
         var data = line.slice(6);
-        if (data === '[DONE]') break;
         try {
           var parsed = JSON.parse(data);
           if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
             fullText += parsed.delta.text;
             textEl.textContent = fullText;
+          } else if (parsed.type === 'message_stop') {
+            sawMessageStop = true;
+          } else if (parsed.type === 'error') {
+            throw new Error((parsed.error && parsed.error.message) || 'The model reported an error mid-stream.');
           }
-        } catch(pe) { /* skip malformed SSE line */ }
+        } catch(pe) { if (!(pe instanceof SyntaxError)) throw pe; }
       }
+    }
+
+    if (!sawMessageStop) {
+      textEl.innerHTML = '<div class="error-box"><strong>The connection was interrupted before the debrief finished generating.</strong> Click Generate AI Debrief again — a second attempt usually succeeds.' + (fullText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(fullText) + '</div>' : '') + '</div>';
+      btn.disabled = false;
+      btn.innerHTML = '<span>Generate AI Debrief</span>';
+      return;
     }
 
     if (!fullText) {
@@ -4419,10 +4534,16 @@ async function generateMockDebrief() {
 async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
   var out = document.getElementById('output_'+id);
   if (out) { out.innerHTML = '<span class="output-placeholder streaming-cursor"></span>'; }
-  
+  if (btn) { btn.disabled = true; }
+
+  var _ctrl = new AbortController();
+  var _timeoutMs = (id === '0') ? 240000 : (id === '3a') ? 180000 : 90000;
+  var _timeout = setTimeout(function(){ _ctrl.abort(); }, _timeoutMs);
+
   try {
     var r = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
       method: 'POST',
+      signal: _ctrl.signal,
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
@@ -4436,37 +4557,50 @@ async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
     if (!r.ok) {
       var errBody = await r.json().catch(function(){return {error:{message:'Unknown error'}};});
       if (out) out.innerHTML = '<div class="error-box">Error: ' + escHtml((errBody.error||{}).message||'Request failed') + '</div>';
-      if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
       return;
     }
 
     // Stream the response
     var reader = r.body.getReader();
     var decoder = new TextDecoder();
+    var buffer = '';
     var fullText = '';
+    var sawMessageStop = false;
     if (out) out.innerHTML = '<span></span>';
     var textSpan = out ? out.querySelector('span') : null;
 
     while (true) {
       var result = await reader.read();
       if (result.done) break;
-      var chunk = decoder.decode(result.value, {stream: true});
-      // Parse SSE lines
-      var lines = chunk.split('\n');
+      buffer += decoder.decode(result.value, {stream: true});
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         if (line.startsWith('data: ')) {
           var data = line.slice(6);
-          if (data === '[DONE]') break;
           try {
             var parsed = JSON.parse(data);
             if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
               fullText += parsed.delta.text;
               if (textSpan) textSpan.textContent = fullText;
+            } else if (parsed.type === 'message_stop') {
+              sawMessageStop = true;
+            } else if (parsed.type === 'error') {
+              throw new Error((parsed.error && parsed.error.message) || 'The model reported an error mid-stream.');
             }
-          } catch(e) {}
+          } catch(e) {
+            if (!(e instanceof SyntaxError)) throw e;
+          }
         }
       }
+    }
+
+    if (!sawMessageStop) {
+      if (out) out.innerHTML = '<div class="error-box"><strong>The connection was interrupted before the response finished generating.</strong> Click Generate again — a second attempt usually succeeds.' + (fullText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(fullText) + '</div>' : '') + '</div>';
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
+      clearTimeout(_timeout);
+      return;
     }
 
     // Save output
@@ -4503,9 +4637,14 @@ async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
 
   } catch(e) {
     console.error('Streaming error:', e);
-    if (out) out.innerHTML = '<div class="error-box">Connection error. Please try again.<br><br>' + escHtml(e.message) + '</div>';
+    var errMsg = (e.name === 'AbortError')
+      ? 'Generation timed out. Click Generate again — a second attempt usually succeeds.'
+      : 'Connection error. Please try again.<br><br>' + escHtml(e.message);
+    if (out) out.innerHTML = '<div class="error-box">' + errMsg + '</div>';
+  } finally {
+    clearTimeout(_timeout);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
   }
-  if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
 }
 
 var DIM_MAP = {
@@ -5632,7 +5771,7 @@ function renderAgent075() {
   var html = '';
 
   // Context panel
-  html += '<div class="context-panel"><span class="context-icon">◆</span><div class="context-text"><strong>Agent 2 — Career Capital Options Analysis.</strong> Run this before Agent 3. Most executives start networking before they know which version of themselves to present. This agent analyzes your Career Capital Summary against up to three realistic paths, scores each against your stated preferences, and produces a ranked recommendation with honest trade-offs. The path you choose here shapes your resume, your LinkedIn, your outreach — everything downstream. Do not skip it.</div></div>';
+  html += '<div class="context-panel"><span class="context-icon">◆</span><div class="context-text"><strong>Agent 2 — Career Capital Options Analysis.</strong> Run this before Agent 3. Most executives start networking before they know which version of themselves to present. This agent analyzes your Career Capital Summary against up to three realistic paths, scores each against your stated preferences, and produces a ranked recommendation with honest trade-offs.<br><br><strong>Why it matters:</strong> Executives often default to the path that looks most familiar — staying in the same function, the same company type, the same industry — without ever weighing it against a genuinely different direction with its own comp structure, pace, and lifestyle trade-offs. Every agent that follows builds directly on the path you choose here: the resume Agent 3 writes, the LinkedIn profile Agent 4 rebuilds, and the outreach Agent 9 drafts are all calibrated to one specific direction. Choosing a path by instinct rather than analysis means every downstream document gets built for the wrong target.<br><br><strong>What you need to do:</strong> Complete Steps 1 through 4 honestly — your career arc, up to three specific paths you are genuinely considering, the preference sliders (be honest, not aspirational), and your search context. Generate the analysis, review the trade-offs for each path without skipping the ones that are unflattering, then copy the section labeled <strong>RECOMMENDED PATH</strong> into Agent 3 as your target role context. The path you choose here shapes everything downstream — do not skip it.</div></div>';
 
   // Auto-pull notice if CCS exists
   if (ccs) {
@@ -5654,7 +5793,7 @@ function renderAgent075() {
 
   // ── STEP 2: Paths to Analyze ──
   html += '<div class="gateway-section"><div class="gateway-header"><span class="gateway-step-badge">2</span><span class="gateway-header-text">Paths to Analyze</span></div><div class="gateway-body">';
-  html += '<div class="context-text" style="margin-bottom:16px">Define up to three paths. Be specific — a title, an industry, a type of role, or a direction. The more precise the path, the more precise the analysis. Leave a path blank to skip it.</div>';
+  html += '<div style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px">Define up to three paths. Be specific — a title, an industry, a type of role, or a direction. The more precise the path, the more precise the analysis. Leave a path blank to skip it.</div>';
 
   [
     {id:'path1', label:'Path One', icon:'◆', req:true},
@@ -5680,7 +5819,7 @@ function renderAgent075() {
   ];
 
   html += '<div class="gateway-section"><div class="gateway-header"><span class="gateway-step-badge">3</span><span class="gateway-header-text">Preference Calibration</span></div><div class="gateway-body">';
-  html += '<div class="context-text" style="margin-bottom:16px">Slide each dial to reflect your honest preference. These are not permanent commitments — they are inputs. The more honest you are, the more accurate the analysis.</div>';
+  html += '<div style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px">Slide each dial to reflect your honest preference. These are not permanent commitments — they are inputs. The more honest you are, the more accurate the analysis.</div>';
 
   sliders.forEach(function(s) {
     var savedVal = parseInt((STATE.savedInputs || {})['0.75_' + s.id] || '5');
@@ -5938,7 +6077,7 @@ End with: TARGET TITLE FOR AGENT 0B \u2014 [the specific title they should optim
 
     var reader = r.body.getReader();
     var decoder = new TextDecoder();
-    var buffer = '', fullText = '';
+    var buffer = '', fullText = '', sawMessageStop = false;
     if (out) { out.innerHTML = '<span id="a075-stream-span"></span>'; }
     var span = document.getElementById('a075-stream-span');
 
@@ -5952,18 +6091,28 @@ End with: TARGET TITLE FOR AGENT 0B \u2014 [the specific title they should optim
         var line = lines[li];
         if (!line.startsWith('data: ')) continue;
         var data = line.slice(6);
-        if (data === '[DONE]') break;
         try {
           var parsed = JSON.parse(data);
           if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
             fullText += parsed.delta.text;
             if (span) span.textContent = fullText;
+          } else if (parsed.type === 'message_stop') {
+            sawMessageStop = true;
+          } else if (parsed.type === 'error') {
+            throw new Error((parsed.error && parsed.error.message) || 'The model reported an error mid-stream.');
           }
-        } catch(pe) {}
+        } catch(pe) {
+          if (!(pe instanceof SyntaxError)) throw pe;
+        }
       }
     }
 
     if (!fullText) { throw new Error('Empty response from API'); }
+    if (!sawMessageStop) {
+      var err075 = new Error('The connection was interrupted before the response finished generating. Click Generate again — a second attempt usually succeeds.');
+      err075.partialText = fullText;
+      throw err075;
+    }
 
     if (!STATE.savedOutputs) STATE.savedOutputs = {};
     STATE.savedOutputs['0.75'] = fullText;
@@ -5978,7 +6127,8 @@ End with: TARGET TITLE FOR AGENT 0B \u2014 [the specific title they should optim
     if (body) { body.innerHTML = renderAgent075(); }
 
   } catch(e) {
-    if (out) out.innerHTML = '<div class="error-box">Error generating output: ' + escHtml(e.message) + '. Please try again.</div>';
+    var partial075 = e.partialText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(e.partialText) + '</div>' : '';
+    if (out) out.innerHTML = '<div class="error-box">Error generating output: ' + escHtml(e.message) + partial075 + '</div>';
     console.error('Agent 2 error:', e);
   }
 
@@ -6262,6 +6412,7 @@ async function generateAgent2_5() {
     var reader1 = r1.body.getReader();
     var decoder = new TextDecoder();
     var buf = '';
+    var sawStop1 = false;
     if (outCustom) outCustom.innerHTML = '<span id="a25-stream-custom"></span>';
     var span1 = document.getElementById('a25-stream-custom');
     while (true) {
@@ -6271,12 +6422,18 @@ async function generateAgent2_5() {
       for (var li=0;li<slines.length;li++) {
         var ln = slines[li];
         if (!ln.startsWith('data: ')) continue;
-        var d = ln.slice(6); if (d==='[DONE]') break;
-        try { var p=JSON.parse(d); if(p.type==='content_block_delta'&&p.delta&&p.delta.text){customText+=p.delta.text;if(span1)span1.textContent=customText;} } catch(e){}
+        var d = ln.slice(6);
+        try { var p=JSON.parse(d); if(p.type==='content_block_delta'&&p.delta&&p.delta.text){customText+=p.delta.text;if(span1)span1.textContent=customText;} else if(p.type==='message_stop'){sawStop1=true;} else if(p.type==='error'){throw new Error((p.error&&p.error.message)||'The model reported an error mid-stream.');} } catch(e){ if(!(e instanceof SyntaxError)) throw e; }
       }
     }
+    if (!sawStop1) {
+      var err1 = new Error('The connection was interrupted before the resume finished generating. Click Generate again — a second attempt usually succeeds.');
+      err1.partialText = customText;
+      throw err1;
+    }
   } catch(e) {
-    if (outCustom) outCustom.innerHTML = '<div class="error-box">Error generating resume: ' + escHtml(e.message) + '</div>';
+    var partial1 = e.partialText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(e.partialText) + '</div>' : '';
+    if (outCustom) outCustom.innerHTML = '<div class="error-box">Error generating resume: ' + escHtml(e.message) + partial1 + '</div>';
     btn.disabled = false; btn.innerHTML = '<span>✦ Generate Customized Resume + Change Log →</span>';
     return;
   }
@@ -6322,6 +6479,7 @@ async function generateAgent2_5() {
     if (!r2.ok) throw new Error('HTTP ' + r2.status);
     var reader2 = r2.body.getReader();
     var buf2 = '';
+    var sawStop2 = false;
     if (outDiff) outDiff.innerHTML = '<span id="a25-stream-diff"></span>';
     var span2 = document.getElementById('a25-stream-diff');
     while (true) {
@@ -6331,12 +6489,19 @@ async function generateAgent2_5() {
       for (var li2=0;li2<slines2.length;li2++) {
         var ln2 = slines2[li2];
         if (!ln2.startsWith('data: ')) continue;
-        var d2 = ln2.slice(6); if (d2==='[DONE]') break;
-        try { var p2=JSON.parse(d2); if(p2.type==='content_block_delta'&&p2.delta&&p2.delta.text){diffText+=p2.delta.text;if(span2)span2.textContent=diffText;} } catch(e){}
+        var d2 = ln2.slice(6);
+        try { var p2=JSON.parse(d2); if(p2.type==='content_block_delta'&&p2.delta&&p2.delta.text){diffText+=p2.delta.text;if(span2)span2.textContent=diffText;} else if(p2.type==='message_stop'){sawStop2=true;} else if(p2.type==='error'){throw new Error((p2.error&&p2.error.message)||'The model reported an error mid-stream.');} } catch(e){ if(!(e instanceof SyntaxError)) throw e; }
       }
     }
+    if (!sawStop2) {
+      var err2 = new Error('The connection was interrupted before the change log finished generating. Your customized resume above is unaffected and already saved.');
+      err2.partialText = diffText;
+      throw err2;
+    }
   } catch(e) {
-    if (outDiff) outDiff.innerHTML = '<div class="error-box">Error generating change log: ' + escHtml(e.message) + '</div>';
+    var partial2 = e.partialText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(e.partialText) + '</div>' : '';
+    if (outDiff) outDiff.innerHTML = '<div class="error-box">Error generating change log: ' + escHtml(e.message) + partial2 + '</div>';
+    diffText = '';
   }
 
   // Save outputs
@@ -6787,7 +6952,7 @@ function connectGoogleCalendar() {
     + '</div>'
     + '<div style="margin-bottom:14px">'
     + '<label style="font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:5px">Google Client ID <span style="color:var(--gold-dark);font-size:10px">(Required — from Google Cloud Console)</span></label>'
-    + '<input id="gcal-client-id" type="text" class="dash-inline-input" placeholder="Your Google OAuth 2.0 Client ID" value="' + escHtml(localStorage.getItem('gcal_client_id')||'') + '">'
+    + '<input id="gcal-client-id" type="text" class="dash-inline-input" placeholder="Your Google OAuth 2.0 Client ID" value="' + escHtml(localStorage.getItem('ee_gcal_client_id')||'') + '">'
     + '<div style="font-size:10px;color:var(--text-muted);margin-top:4px">Create at console.cloud.google.com → Credentials → OAuth 2.0 Client IDs</div>'
     + '</div>'
     + '<div style="background:rgba(184,151,58,0.08);border:1px solid rgba(184,151,58,0.2);border-radius:4px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:var(--text-secondary);line-height:1.6">'
@@ -6811,12 +6976,12 @@ function startGcalOAuth() {
     showToast('Please enter your Google Client ID first.');
     return;
   }
-  localStorage.setItem('gcal_client_id', clientId);
+  localStorage.setItem('ee_gcal_client_id', clientId);
   closeGcalModal();
 
   var scopes = 'https://www.googleapis.com/auth/calendar.events.readonly';
   var state = 'execedge_gcal_' + Date.now();
-  localStorage.setItem('gcal_oauth_state', state);
+  localStorage.setItem('ee_gcal_oauth_state', state);
 
   var authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
     + '?client_id=' + encodeURIComponent(clientId)
@@ -6840,7 +7005,7 @@ function startGcalOAuth() {
       if (popup.closed) {
         clearInterval(pollInterval);
         // Check if token was stored by the callback
-        var token = localStorage.getItem('gcal_access_token');
+        var token = localStorage.getItem('ee_gcal_access_token');
         if (token) {
           STATE.mcpCalendarConnected = true;
           saveState();
@@ -6861,7 +7026,7 @@ window.addEventListener('message', function(event) {
   if (event.data && event.data.type === 'gcal_oauth_success') {
     var token = event.data.access_token;
     if (token) {
-      localStorage.setItem('gcal_access_token', token);
+      localStorage.setItem('ee_gcal_access_token', token);
       STATE.mcpCalendarConnected = true;
       saveState();
       showToast('✓ Google Calendar connected.');
@@ -6872,7 +7037,7 @@ window.addEventListener('message', function(event) {
 
 async function fetchCalendarEvents(accessToken) {
   if (!accessToken) {
-    accessToken = localStorage.getItem('gcal_access_token');
+    accessToken = localStorage.getItem('ee_gcal_access_token');
     if (!accessToken) { showToast('Calendar not connected. Click Connect first.'); return; }
   }
   try {
@@ -6889,7 +7054,7 @@ async function fetchCalendarEvents(accessToken) {
     });
     if (!r.ok) {
       if (r.status === 401) {
-        localStorage.removeItem('gcal_access_token');
+        localStorage.removeItem('ee_gcal_access_token');
         STATE.mcpCalendarConnected = false;
         saveState();
         showToast('Calendar access expired. Please reconnect.');
@@ -7248,7 +7413,7 @@ async function streamA7Doc(key, prompt, outEl) {
   }
   var reader = r.body.getReader();
   var decoder = new TextDecoder();
-  var buffer = '', fullText = '';
+  var buffer = '', fullText = '', sawMessageStop = false;
   if (outEl) outEl.textContent = '';
   while (true) {
     var result = await reader.read();
@@ -7260,16 +7425,24 @@ async function streamA7Doc(key, prompt, outEl) {
       var line = lines[i];
       if (line.startsWith('data: ')) {
         var data = line.slice(6);
-        if (data === '[DONE]') break;
         try {
           var parsed = JSON.parse(data);
           if (parsed.type === 'content_block_delta' && parsed.delta && parsed.delta.text) {
             fullText += parsed.delta.text;
             if (outEl) outEl.textContent = fullText;
+          } else if (parsed.type === 'message_stop') {
+            sawMessageStop = true;
+          } else if (parsed.type === 'error') {
+            throw new Error((parsed.error && parsed.error.message) || 'The model reported an error mid-stream.');
           }
-        } catch(e) {}
+        } catch(e) { if (!(e instanceof SyntaxError)) throw e; }
       }
     }
+  }
+  if (!sawMessageStop) {
+    var errDoc = new Error('The connection was interrupted before this document finished generating. Click Regenerate to retry.');
+    errDoc.partialText = fullText;
+    throw errDoc;
   }
   return fullText;
 }
@@ -7925,7 +8098,7 @@ async function runMigration() {
   if (btn) { btn.textContent = 'Uploading...'; btn.disabled = true; }
   
   try {
-    var token = localStorage.getItem('sb_token');
+    var token = localStorage.getItem('ee_sb_token');
     
     // Get the full local state
     var raw = localStorage.getItem('execedge_ai_v5') || localStorage.getItem('ee_app_state');
@@ -7993,13 +8166,13 @@ function dismissMigration() {
 
 
 async function getValidToken() {
-  var token = localStorage.getItem('sb_token');
+  var token = localStorage.getItem('ee_sb_token');
   if (!token || !currentUser) return token;
   // Fast JWT expiry pre-check before network call
   try {
     var payload = JSON.parse(atob(token.split('.')[1]));
     if (payload.exp && Date.now() > payload.exp * 1000) {
-      localStorage.removeItem('sb_token');
+      localStorage.removeItem('ee_sb_token');
       currentUser = null;
       showToast('Your session has expired. Please sign in again.');
       setTimeout(function(){ showAuthModal(); }, 1500);
@@ -8013,9 +8186,9 @@ async function getValidToken() {
     });
     if (r.ok) return token;
     // Token expired - clear session
-    localStorage.removeItem('sb_token');
-    localStorage.removeItem('sb_uid');
-    localStorage.removeItem('sb_email');
+    localStorage.removeItem('ee_sb_token');
+    localStorage.removeItem('ee_sb_uid');
+    localStorage.removeItem('ee_sb_email');
     currentUser = null;
     // Show re-auth modal after brief delay
     setTimeout(function() {
@@ -8154,9 +8327,9 @@ function runExecEdgeSelfTest() {
 
 window.addEventListener('DOMContentLoaded', async function() {
   loadState();
-  var token = localStorage.getItem('sb_token');
-  var uid = localStorage.getItem('sb_uid');
-  var email = localStorage.getItem('sb_email');
+  var token = localStorage.getItem('ee_sb_token');
+  var uid = localStorage.getItem('ee_sb_uid');
+  var email = localStorage.getItem('ee_sb_email');
   if (token && uid) {
     try {
       var vr = await fetch(SB_URL + '/auth/v1/user', {
@@ -8170,7 +8343,7 @@ window.addEventListener('DOMContentLoaded', async function() {
         setTimeout(checkAndOfferMigration, 1500);
         if (isAdmin()) setTimeout(healthCheck, 3000);
       } else {
-        localStorage.removeItem('sb_token'); localStorage.removeItem('sb_uid'); localStorage.removeItem('sb_email');
+        localStorage.removeItem('ee_sb_token'); localStorage.removeItem('ee_sb_uid'); localStorage.removeItem('ee_sb_email');
         if (STATE.plan) { restoreSession(); } else { document.getElementById('onboardingScreen').style.display = 'flex'; }
         setTimeout(function(){ showAuthModal(); }, 900);
       }
