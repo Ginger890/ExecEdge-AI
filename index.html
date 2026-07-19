@@ -2675,8 +2675,23 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
   if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner dark"></div><span>' + btnLabel + '...</span>'; }
 
   var _eeCtrl = new AbortController();
-  // Agent 1 (Career Capital Assessment) produces 5 deliverables and needs more time
-  var _eeTimeoutMs = (id === '0') ? 240000 : (id === '3a') ? 180000 : 90000; // Agent 1=4min, Agent 12=3min (largest output), others=90s
+  // Per-agent timeout budgets (milliseconds). This app was missing the same
+  // comprehensive map GovEdge AI already has — every agent not explicitly
+  // listed here was silently defaulting to 90 seconds, which is why Agent 4
+  // (LinkedIn Profile Intelligence — 9 full sections) kept timing out.
+  var EXECEDGE_TIMEOUTS = {
+    '0':    240000, // Agent 1 — Career Capital Assessment: 5-deliverable structured output
+    '0c':   480000, // Agent 4 — LinkedIn Profile Intelligence: doubled per request (was silently defaulting to 90s)
+    '1':    180000, // Agent 7 — Market Intelligence & Positioning: large multi-part output
+    '6a':   180000, // Agent 8 — Compensation Benchmarking: full structured comp architecture
+    '2':    180000, // Agent 9 — Demand Creation & Outreach: outreach system + toolkit
+    '3a':   180000, // Agent 12 — Interview Intelligence: full intelligence brief
+    '3b':   180000, // Agent 15 — Offer, Decision & Relocation: up to 3 parts
+    '5a':   180000, // Agent 17 — LinkedIn Authority Articles: large structured article output
+    '4b':   180000, // Agent 18 — Onboarding Intelligence: large structured 30-60-90 plan
+    '6d':   180000  // Agent 19 — Board Readiness & Board Search: large structured output
+  };
+  var _eeTimeoutMs = EXECEDGE_TIMEOUTS[id] || 120000; // default 2 minutes (was 90 seconds)
   var _eeTimeout = setTimeout(function(){ _eeCtrl.abort(); }, _eeTimeoutMs);
   try {
     var r = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
@@ -4706,7 +4721,16 @@ async function callClaudeStreaming(id, msgs, lastPrompt, btn, btnLabel) {
   if (btn) { btn.disabled = true; }
 
   var _ctrl = new AbortController();
-  var _timeoutMs = (id === '0') ? 240000 : (id === '3a') ? 180000 : 90000;
+  // Per-agent timeout budgets (milliseconds) — same map as callClaudeWithMsgs,
+  // kept in sync since between the two functions they cover every agent in
+  // the app. Every agent not explicitly listed here was silently defaulting
+  // to 90 seconds before this fix.
+  var EXECEDGE_TIMEOUTS_2 = {
+    '0':    240000, '0c':   480000, '1':    180000, '6a':   180000,
+    '2':    180000, '3a':   180000, '3b':   180000, '5a':   180000,
+    '4b':   180000, '6d':   180000
+  };
+  var _timeoutMs = EXECEDGE_TIMEOUTS_2[id] || 120000; // default 2 minutes (was 90 seconds)
   var _timeout = setTimeout(function(){ _ctrl.abort(); }, _timeoutMs);
 
   try {
