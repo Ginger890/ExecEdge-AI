@@ -585,7 +585,7 @@ async function resetExecEdgeAccountData() {
     var keysToRemove = [];
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
-      if (k && (k.indexOf('ge_') === 0 || k === LS_KEY)) keysToRemove.push(k);
+      if (k && (k.indexOf('ee_') === 0 || k === LS_KEY)) keysToRemove.push(k);
     }
     keysToRemove.forEach(function(k){ localStorage.removeItem(k); });
   } catch(e) {}
@@ -595,7 +595,7 @@ async function resetExecEdgeAccountData() {
 }
 
 async function saveToCloud(key, value) {
-  try { localStorage.setItem('ge_'+key, value); } catch(e) {}
+  try { localStorage.setItem('ee_'+key, value); } catch(e) {}
   if (!currentUser) return;
   try {
     var token = await getValidToken();
@@ -646,7 +646,7 @@ async function loadCloudData() {
     };
     if (Array.isArray(rows)) {
       rows.forEach(function(row){
-        localStorage.setItem('ge_'+row.data_key, row.data_value);
+        localStorage.setItem('ee_'+row.data_key, row.data_value);
         // Rebuild STATE.savedOutputs from individual output keys
         if (keyMap[row.data_key]) {
           if (!STATE.savedOutputs) STATE.savedOutputs = {};
@@ -8129,6 +8129,10 @@ async function runMigration() {
 function dismissMigration() {
   var banner = document.getElementById('migration-banner');
   if (banner) banner.remove();
+  // Persist the dismissal the same way a completed upload does — otherwise
+  // this prompt has no memory of "Not Now" and re-triggers on every refresh,
+  // since the local data it's checking for never goes away just by declining.
+  if (currentUser) { try { localStorage.setItem('ee_synced', currentUser.id); } catch(e) {} }
 }
 
 
