@@ -6712,10 +6712,14 @@ async function generateAgent2_5() {
     + '3. ACCOMPLISHMENTS: Re-order and re-weight accomplishments to match this role\'s priorities. Add context where it strengthens relevance. Do not invent metrics.\n'
     + '4. KEYWORDS: Include exact phrases from the JD — not synonyms. ATS systems match exact strings.\n'
     + '5. SEO: Structure for LinkedIn and Google searchability — title, keywords in summary, headline-worthy first bullet per role.\n'
-    + '6. RECRUITER READABILITY: First page must answer "can this person do this specific job?" in 10 seconds.\n'
-    + '7. EXECUTIVE & BOARD READABILITY: No fluff. Every line must earn its place.\n'
-    + '8. HUMAN READABILITY: Clear structure, consistent formatting, no walls of text.\n\n'
-    + 'Output the complete customized resume. No commentary — just the resume.';
+    + '6. TWO-PAGE LIMIT — NON-NEGOTIABLE: The finished resume must fit on exactly two standard US Letter pages when placed in Word using 0.5–0.65 inch margins, 10.5–11 point Arial/Calibri/Aptos body text, single spacing, and 3–6 points after paragraphs. Target 850–1,050 words; never exceed 1,100 words. Do not solve the length problem with tiny fonts, narrow margins, dense paragraphs, or omitted white space.\n'
+    + '7. SPACE BUDGET: Use a 3–5 line executive summary; 12–16 core competencies; 4–6 bullets for the most recent role; 3–5 bullets for the next two roles; 2–3 bullets for older relevant roles; and compress positions older than roughly 15 years into an Earlier Career section unless essential to this role. Keep bullets to one or two lines whenever possible. Remove duplicated duties, generic responsibilities, outdated detail, and low-value bullets.\n'
+    + '8. ATS TARGET: Aim for an honest 85%–90% match to the job description. Do not force 100% keyword coverage, keyword-stuff, repeat phrases unnaturally, or claim experience the candidate does not have. Prioritize the highest-value required terms and role-specific language.\n'
+    + '9. RECRUITER READABILITY: First page must answer "can this person do this specific job?" in 10 seconds. Lead with scope, level, industry fit, and quantified outcomes.\n'
+    + '10. EXECUTIVE READABILITY: Present enterprise scale, strategic leadership, transformation, financial/operational impact, stakeholder influence, and organizational scope. No task-list language, filler, or inflated claims.\n'
+    + '11. HUMAN READABILITY: Use clear section headings, concise bullets, strong white-space rhythm, consistent formatting, and no walls of text. Every line must earn its place.\n'
+    + '12. FINAL SELF-AUDIT BEFORE OUTPUT: Silently check word count, bullet count, duplication, keyword naturalness, chronology, accuracy, and two-page fit. If it is too long, compress it before responding.\n\n'
+    + 'Output only the complete two-page customized resume. No commentary, page-count explanation, or change log.';
 
   var customText = '';
   var _a25Ctrl1 = new AbortController();
@@ -6727,9 +6731,9 @@ async function generateAgent2_5() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
+        max_tokens: 4200,
         stream: true,
-        system: 'You are an elite executive resume writer. Produce complete, market-ready, ATS-optimized resumes with no filler, no generic language, and no invented metrics.',
+        system: 'You are an elite executive resume writer. Produce accurate, market-ready, recruiter-readable resumes that fit two standard US Letter pages, target an honest 85%–90% ATS match, and never invent metrics or experience.',
         messages: [{role:'user', content: resumePrompt}]
       })
     });
@@ -6766,6 +6770,62 @@ async function generateAgent2_5() {
     return;
   }
 
+  // Enforce a measurable two-page ceiling. Formatting varies by word processor,
+  // so word count is used as the reliable in-app guardrail. If Claude exceeds
+  // the ceiling, run one automatic compression pass before saving or auditing.
+  var resumeWordCount = function(text){
+    var m = String(text || '').trim().match(/\S+/g);
+    return m ? m.length : 0;
+  };
+  if (resumeWordCount(customText) > 1100) {
+    btn.innerHTML = '<div class="spinner dark"></div><span>Compressing resume to a true two-page length...</span>';
+    if (outCustom) outCustom.innerHTML = '<span class="output-placeholder streaming-cursor">The first draft exceeded the two-page limit. Compressing it now without losing critical evidence...</span>';
+    var compressPrompt = 'You are a senior executive resume editor. Compress the resume below so it will fit on exactly two standard US Letter pages in Word using 0.5–0.65 inch margins, 10.5–11 point Arial/Calibri/Aptos, single spacing, and normal readable white space.\n\n'
+      + 'NON-NEGOTIABLE OUTPUT LIMIT: 850–1,050 words; absolute maximum 1,100 words.\n'
+      + 'PRESERVE: factual accuracy, chronology, strongest quantified achievements, enterprise scope, role-specific keywords, and an honest 85%–90% ATS match.\n'
+      + 'CUT OR COMPRESS: duplicate concepts, generic responsibilities, weak/old bullets, long summaries, repeated keywords, and detail older than about 15 years.\n'
+      + 'STRUCTURE: 3–5 line summary; 12–16 competencies; 4–6 bullets for most recent role; 3–5 for next two; 2–3 for older relevant roles; Earlier Career line for remaining history.\n'
+      + 'Do not invent, combine, or exaggerate metrics. Output only the complete revised resume.\n\nRESUME TO COMPRESS:\n' + customText;
+    var compressedText = '';
+    var _compressCtrl = new AbortController();
+    var _compressTimeout = setTimeout(function(){ _compressCtrl.abort(); }, 180000);
+    try {
+      var cr = await fetch('https://anthropic-proxy.cssceo.workers.dev', {
+        method:'POST', signal:_compressCtrl.signal, headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4200,stream:true,
+          system:'You edit executive resumes to a strict two-page limit while preserving accuracy, human readability, recruiter appeal, and an honest 85%–90% ATS match.',
+          messages:[{role:'user',content:compressPrompt}]})
+      });
+      clearTimeout(_compressTimeout);
+      if (!cr.ok) throw new Error(friendlyApiError(cr.status, null));
+      var creader=cr.body.getReader(), cdecoder=new TextDecoder(), cbuf='', csawStop=false;
+      while(true){
+        var cres=await creader.read(); if(cres.done) break;
+        cbuf += cdecoder.decode(cres.value,{stream:true});
+        var cls=cbuf.split('\n'); cbuf=cls.pop();
+        for(var ci=0;ci<cls.length;ci++){
+          if(!cls[ci].startsWith('data: ')) continue;
+          try{var cp=JSON.parse(cls[ci].slice(6));
+            if(cp.type==='content_block_delta'&&cp.delta&&cp.delta.text) compressedText+=cp.delta.text;
+            else if(cp.type==='message_stop') csawStop=true;
+            else if(cp.type==='error') throw new Error((cp.error&&cp.error.message)||'The model reported an error during compression.');
+          }catch(ce){if(!(ce instanceof SyntaxError)) throw ce;}
+        }
+      }
+      if(!csawStop || !compressedText.trim()) throw new Error('The two-page compression pass was interrupted.');
+      customText = compressedText.trim();
+      if (resumeWordCount(customText) > 1100) {
+        throw new Error('The revised resume still exceeds the 1,100-word two-page ceiling. Please generate again with a more concise base resume.');
+      }
+      if (outCustom) outCustom.textContent = customText;
+    } catch(compressErr) {
+      clearTimeout(_compressTimeout);
+      if (outCustom) outCustom.innerHTML = '<div class="error-box">The resume draft exceeded the two-page limit, and the automatic compression pass could not finish: ' + escHtml(compressErr.message) + '<br><br>Please click Generate again. The overlength draft was not saved as final.</div>';
+      btn.disabled=false; btn.innerHTML='<span>✦ Generate Customized Resume + Change Log →</span>';
+      return;
+    }
+  }
+
   // ── PROMPT 2: Change Log + ATS Audit ──
   btn.innerHTML = '<div class="spinner dark"></div><span>Building change log and ATS audit...</span>';
   if (outDiff) outDiff.innerHTML = '<span class="output-placeholder streaming-cursor"></span>';
@@ -6785,7 +6845,7 @@ async function generateAgent2_5() {
     + '— Status: PRESENT (and where) or MISSING\n'
     + '— If missing: recommended placement\n\n'
     + 'SECTION C — SUBMISSION READINESS\n'
-    + '— Overall ATS match score estimate (0-100%)\n'
+    + '— Overall ATS match score estimate (0-100%); the intended target is an honest 85%–90%, not artificial 100% keyword stuffing\n'
     + '— Top 3 strengths of this application\n'
     + '— Top 2 risks or gaps\n'
     + '— One specific thing to address in the cover letter\n'
@@ -6931,7 +6991,7 @@ async function submitResumeFeedback() {
   try { saveToCloud('a25_feedback', JSON.stringify(STATE.a25Feedback)); } catch(e) {}
 
   var jd = getInp('2.5','jd') || '';
-  var prompt = 'You are an elite executive resume writer. Below is a customized executive resume you previously produced, followed by a correction request from the client. Apply ONLY the requested correction(s) precisely — do not rewrite, rephrase, or restructure any other part of the resume. Preserve all formatting, structure, and unrelated content exactly as-is.\n\n'
+  var prompt = 'You are an elite executive resume writer. Below is a customized executive resume you previously produced, followed by a correction request from the client. Apply ONLY the requested correction(s) precisely — do not rewrite, rephrase, or restructure any other part of the resume. Preserve all formatting, structure, and unrelated content exactly as-is. The corrected resume must remain within the strict two-page ceiling of 850–1,050 words and may never exceed 1,100 words.\n\n'
     + 'CURRENT RESUME:\n' + currentResume + '\n\n'
     + (jd ? 'JOB DESCRIPTION (for context only):\n' + jd.slice(0,1000) + '\n\n' : '')
     + 'CLIENT CORRECTION REQUEST:\n' + note + '\n\n'
@@ -6947,7 +7007,7 @@ async function submitResumeFeedback() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        system: 'You are a precise executive resume editor. You make exactly the correction requested and nothing else.',
+        system: 'You are a precise executive resume editor. Make exactly the correction requested, preserve factual accuracy, and keep the full resume within two standard US Letter pages and no more than 1,100 words.',
         messages: [{role:'user', content: prompt}]
       })
     });
