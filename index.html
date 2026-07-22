@@ -277,7 +277,7 @@ window.addEventListener('error', function(event) {
   }
 
   try {
-    var errLog = JSON.parse(localStorage.getItem('ee_errors') || '[]');
+    var errLog = safeJsonParse(localStorage.getItem('ee_errors'), []);
     errLog.push({v:APP_VERSION,msg:msg,src:src,line:line,u:currentUser?currentUser.email:'anon',t:new Date().toISOString()});
     if (errLog.length > 20) errLog = errLog.slice(-20);
     localStorage.setItem('ee_errors', JSON.stringify(errLog));
@@ -298,7 +298,7 @@ window.addEventListener('unhandledrejection', function(event) {
 // (which proactively fetches over the network to catch clients stuck on a
 // stale cached copy — GitHub Pages does not support custom cache-control
 // headers, so this in-app check is what actually solves that problem).
-var APP_VERSION = '3.0.2';
+var APP_VERSION = '3.0.3';
 // Main 19-agent pathway used for progress, restore order, and QA.
 // Optional/parallel agents (6e, 6f, 6g) remain available but do not distort 19-agent progress.
 var MAIN_AGENT_ORDER = ['0','0.75','0b','0c','0.5a','0.5b','1','6a','2','2.5','6h','3a','6c','6b','3b','4a','5a','4b','6d'];
@@ -405,7 +405,14 @@ async function refreshAuthSession() {
   // so if another tab set the lock within the last 8 seconds, wait briefly
   // and adopt whatever token that tab lands on instead of racing it.
   var lockRaw = localStorage.getItem('ee_refresh_lock');
-  var lockAge = lockRaw ? (Date.now() - parseInt(lockRaw, 10)) : Infinity;
+  var lockStamp = lockRaw ? Number(lockRaw) : NaN;
+  var lockAge = Number.isFinite(lockStamp) ? (Date.now() - lockStamp) : Infinity;
+  if (lockRaw && (!Number.isFinite(lockStamp) || lockAge > 15000)) {
+    console.warn('ExecEdge: force-clearing stale refresh lock.', {ageMs: lockAge});
+    localStorage.removeItem('ee_refresh_lock');
+    lockRaw = null;
+    lockAge = Infinity;
+  }
   if (lockAge >= 0 && lockAge < 8000) {
     for (var attempt = 0; attempt < 10; attempt++) {
       await new Promise(function(res){ setTimeout(res, 300); });
@@ -611,16 +618,45 @@ async function resetExecEdgeAccountData() {
   setTimeout(function(){ location.reload(); }, 1200);
 }
 
-async function saveToCloud(key, value) {
-  try { localStorage.setItem('ee_'+key, value); } catch(e) {}
-  if (!currentUser) return;
+var _lastFailedCloudSave = null;
+function showCloudSaveFailure(key, value, message) {
+  _lastFailedCloudSave = {key:key, value:value};
+  var old = document.getElementById('ee-cloud-save-error');
+  if (old) old.remove();
+  var bar = document.createElement('div');
+  bar.id = 'ee-cloud-save-error';
+  bar.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:99999;max-width:420px;background:#991B1B;color:#fff;padding:12px 14px;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.25);font:12px DM Sans,sans-serif;display:flex;align-items:center;gap:10px';
+  var text = document.createElement('span');
+  text.textContent = 'Could not save to cloud. Your browser copy is safe.';
+  var retry = document.createElement('button');
+  retry.textContent = 'Retry';
+  retry.style.cssText = 'border:0;border-radius:4px;padding:6px 10px;font-weight:700;cursor:pointer';
+  retry.onclick = retryLastCloudSave;
+  bar.appendChild(text); bar.appendChild(retry); document.body.appendChild(bar);
+  console.warn('Cloud save failed:', message || 'Unknown error');
+}
+async function retryLastCloudSave() {
+  if (!_lastFailedCloudSave) return;
+  var pending = _lastFailedCloudSave;
+  var ok = await saveToCloud(pending.key, pending.value, true);
+  if (ok) {
+    _lastFailedCloudSave = null;
+    var bar = document.getElementById('ee-cloud-save-error'); if (bar) bar.remove();
+    showToast('✓ Cloud save completed.');
+  }
+}
+async function saveToCloud(key, value, isRetry) {
+  try { localStorage.setItem('ee_'+key, (typeof value === 'string') ? value : safeJsonStringify(value, '')); } catch(e) {}
+  if (!currentUser) return false;
   try {
     var token = await getValidToken();
-    if (!token) return;
+    if (!token) throw new Error('No valid sign-in token.');
     var cloudValue = (typeof value === 'string') ? value : safeJsonStringify(value, '');
     var resp = await fetchWithTimeout(SB_URL+'/rest/v1/execedge_data?on_conflict=user_id,data_key',{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+token,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:currentUser.id,data_key:key,data_value:cloudValue,updated_at:new Date().toISOString()})}, 20000);
     if (!resp.ok) throw new Error((await resp.text()) || ('HTTP '+resp.status));
-  } catch(e) { console.warn('Cloud save failed:',e.message); }
+    if (isRetry) { var b=document.getElementById('ee-cloud-save-error'); if(b)b.remove(); }
+    return true;
+  } catch(e) { showCloudSaveFailure(key, value, e.message); return false; }
 }
 
 async function loadCloudData() {
@@ -696,7 +732,7 @@ async function loadCloudData() {
         // Restore resume feedback history
         if (row.data_key === 'a25_feedback') {
           if (!STATE.a25Feedback || STATE.a25Feedback.length === 0) {
-            try { STATE.a25Feedback = JSON.parse(row.data_value) || []; } catch(e) {}
+            STATE.a25Feedback = safeJsonParse(row.data_value, []);
           }
         }
         // Restore saved video introduction metadata (Agent 7)
@@ -707,6 +743,15 @@ async function loadCloudData() {
         if (a7Keys[row.data_key]) {
           if (!STATE.agent7Docs) STATE.agent7Docs = {evp:'',impactBrief:'',boardBio:'',recruiterResume:'',networkingIntro:''};
           if (!STATE.agent7Docs[a7Keys[row.data_key]]) STATE.agent7Docs[a7Keys[row.data_key]] = row.data_value;
+        }
+        if (row.data_key.indexOf('inputs_') === 0) {
+          var ia=row.data_key.slice(7), iv=safeJsonParse(row.data_value,{}); STATE.savedInputs=Object.assign(STATE.savedInputs||{},iv);
+        }
+        if (row.data_key.indexOf('outputs_') === 0) {
+          var oa=row.data_key.slice(8), ov=safeJsonParse(row.data_value,{}); STATE.savedOutputs=Object.assign(STATE.savedOutputs||{},ov);
+        }
+        if (row.data_key.indexOf('checklist_') === 0) {
+          var ca=row.data_key.slice(10); if(!STATE.checklistState)STATE.checklistState={}; STATE.checklistState[ca]=Object.assign(STATE.checklistState[ca]||{},safeJsonParse(row.data_value,{}));
         }
         // Restore assessment result
         if (row.data_key === 'assessment_result') {
@@ -820,17 +865,9 @@ function lsSave(data) {
       console.warn('localStorage quota exceeded');
     }
   }
-  // Debounce cloud saves — batch rapid changes into one save every 10 seconds
-  _cloudSavePending = serialized;
-  if (!_cloudSaveTimer) {
-    _cloudSaveTimer = setTimeout(function() {
-      if (_cloudSavePending) {
-        saveToCloud('app_state', _cloudSavePending);
-        _cloudSavePending = null;
-      }
-      _cloudSaveTimer = null;
-    }, 10000);
-  }
+  // Cloud persistence is granular (per-agent inputs/outputs/checklists).
+  // Do not debounce-write the entire STATE blob: two tabs editing different agents
+  // must never overwrite one another with stale full-state snapshots.
 }
 
 function flushCloudSave() {
@@ -870,6 +907,8 @@ var STATE = {
   a25Feedback:[],
   mcpCalendarConnected: false,
   mcpCalendarEvents: [],
+  _writeVersion:0,
+  _fieldVersions:{},
   searchDashboard:{
     companies:[],
     recruiters:[],
@@ -878,10 +917,31 @@ var STATE = {
   }
 };
 
-function saveState() { lsSave(STATE); }
+function saveState(changedSlice) {
+  STATE._writeVersion = Math.max(0, Number(STATE._writeVersion)||0) + 1;
+  if (!STATE._fieldVersions) STATE._fieldVersions = {};
+  if (changedSlice) STATE._fieldVersions[changedSlice] = STATE._writeVersion;
+  lsSave(STATE);
+  saveToCloud('local_write_version', String(STATE._writeVersion));
+  if (changedSlice && changedSlice.indexOf('input:') === 0) {
+    var aid = changedSlice.slice(6);
+    saveToCloud('inputs_' + aid, safeJsonStringify(extractAgentSlice(STATE.savedInputs, aid), '{}'));
+  } else if (changedSlice && changedSlice.indexOf('output:') === 0) {
+    var oid = changedSlice.slice(7);
+    saveToCloud('outputs_' + oid, safeJsonStringify(extractAgentSlice(STATE.savedOutputs, oid), '{}'));
+  } else if (changedSlice && changedSlice.indexOf('checklist:') === 0) {
+    var cid = changedSlice.slice(10);
+    saveToCloud('checklist_' + cid, safeJsonStringify((STATE.checklistState||{})[cid]||{}, '{}'));
+  }
+}
+function extractAgentSlice(obj, agentId) {
+  var out = {}; obj = obj || {};
+  Object.keys(obj).forEach(function(k){ if (k === agentId || k.indexOf(agentId+'_') === 0) out[k] = obj[k]; });
+  return out;
+}
 function loadState() {
   var saved = lsLoad();
-  if (saved) { STATE = Object.assign(STATE,saved); STATE.conversationHistory = []; }
+  if (saved) { STATE = Object.assign(STATE,saved); STATE.conversationHistory = []; migrateChecklistState(); }
 }
 
 function startApp() {
@@ -908,7 +968,20 @@ function startApp() {
   navigateTo(targetAgent);
 }
 
+
+function stopAllMediaStreams() {
+  try { if (mockState && mockState.isRecording && typeof endMockInterview === 'function') endMockInterview(); } catch(e) {}
+  [window.mockPreviewStream, window.vbPreviewStream, mockPreviewStream, (typeof vbPreviewStream!=='undefined'?vbPreviewStream:null), (mockState&&mockState.stream)].forEach(function(stream){
+    try { if(stream&&stream.getTracks) stream.getTracks().forEach(function(t){t.stop();}); } catch(e) {}
+  });
+  try { mockPreviewStream=null; } catch(e) {}
+  try { if(typeof vbPreviewStream!=='undefined') vbPreviewStream=null; } catch(e) {}
+  if (mockMicInterval) { clearInterval(mockMicInterval); mockMicInterval=null; }
+}
+window.addEventListener('popstate', stopAllMediaStreams);
+
 function navigateTo(id) {
+  stopAllMediaStreams();
   // Cancel any ongoing TTS speech
   if (window.speechSynthesis) { window.speechSynthesis.cancel(); }
   // Clean up camera if leaving mock interview
@@ -1252,7 +1325,7 @@ function renderAgent6E() {
   var cl = STATE.checklistState['6e'] || {};
   html += '<div class="checklist" id="checklist_6e"><div class="checklist-header">Completion Checklist — Gate to ' + (AGENTS[ag.next] ? (AGENTS[ag.next].number + ' — ' + AGENTS[ag.next].title) : 'Next') + '</div>';
   ag.checklist.forEach(function(item, idx) {
-    var ck = cl[idx] || false;
+    var ck = checklistChecked('6e', idx);
     html += '<div class="checklist-item" onclick="toggleCheck(\'6e\',' + idx + ')"><div class="check-box' + (ck?' checked':'') + '"><span class="check-mark">✓</span></div><div class="check-text' + (ck?' checked':'') + '">' + item + '</div></div>';
   });
   html += '</div>';
@@ -1343,7 +1416,7 @@ function restoreVideoBrandPanel() {
   // survive a reload via STATE.savedInputs; the actual video blob does not — it only exists
   // in memory during the recording session, or in Supabase Storage once explicitly saved).
   var lightAttempts = [];
-  try { lightAttempts = JSON.parse((STATE.savedInputs||{})['6e_attemptsMeta'] || '[]'); } catch(e) { lightAttempts = []; }
+  lightAttempts = safeJsonParse((STATE.savedInputs||{})['6e_attemptsMeta'], []);
 
   if (lightAttempts.length && vbState.attempts.length === 0) {
     vbState.attempts = lightAttempts.map(function(a){
@@ -1392,7 +1465,7 @@ function renderAgent6H() {
   var cl = STATE.checklistState['6h'] || {};
   html += '<div class="checklist" id="checklist_6h"><div class="checklist-header">Completion Checklist — Gate to ' + (AGENTS[ag.next] ? (AGENTS[ag.next].number + ' — ' + AGENTS[ag.next].title) : 'Next') + '</div>';
   ag.checklist.forEach(function(item, idx) {
-    var ck = cl[idx] || false;
+    var ck = checklistChecked('6h', idx);
     html += '<div class="checklist-item" onclick="toggleCheck(\'6h\',' + idx + ')"><div class="check-box' + (ck?' checked':'') + '"><span class="check-mark">✓</span></div><div class="check-text' + (ck?' checked':'') + '">' + item + '</div></div>';
   });
   html += '</div>';
@@ -1402,8 +1475,7 @@ function renderAgent6H() {
 }
 
 function getJobResearchRuns() {
-  try { return JSON.parse((STATE.savedOutputs||{})['6h'] || '[]'); }
-  catch(e) { return []; }
+  return safeJsonParse((STATE.savedOutputs||{})['6h'], []);
 }
 
 function renderJobResearchRuns(runs) {
@@ -2088,7 +2160,7 @@ async function saveVideoBrandAttemptToCloud(attempt) {
       targetrole: getInp('6e','targetrole') || ''
     };
     var existing = [];
-    try { existing = JSON.parse((STATE.savedOutputs||{})['6e_video_meta'] || '[]'); } catch(e) { existing = []; }
+    existing = safeJsonParse((STATE.savedOutputs||{})['6e_video_meta'], []);
     existing = existing.filter(function(m){ return m.id !== attempt.id; });
     existing.unshift(meta);
     if (!STATE.savedOutputs) STATE.savedOutputs = {};
@@ -2528,17 +2600,25 @@ function renderAgentBody(id, ag) {
   }
 }
 
+function checkPromptInjection(fieldId, value) {
+  if (!value || !/(jd|job|research|notes|description)/i.test(fieldId)) return;
+  if (/(ignore (all )?(previous|prior) instructions|disregard (the )?(above|previous)|system prompt|developer message)/i.test(value)) {
+    console.warn('ExecEdge prompt-injection-like text detected in field:', fieldId);
+  }
+}
+
 var _autoSaveTimers = {};
 function autoSaveInput(agentId, fieldId) {
   var el = document.getElementById('inp_'+agentId+'_'+fieldId);
   if (!el) return;
   if (!STATE.savedInputs) STATE.savedInputs = {};
   STATE.savedInputs[agentId+'_'+fieldId] = el.value;
-  // Debounce saveState — fire at most once per 500ms per field to prevent flooding
+  saveState('input:' + agentId); // snapshot immediately before any later async work
+  checkPromptInjection(fieldId, el.value);
+  // Debounce dedicated cloud mirrors — local state is already durable
   var key = agentId + '_' + fieldId;
   if (_autoSaveTimers[key]) clearTimeout(_autoSaveTimers[key]);
   _autoSaveTimers[key] = setTimeout(function() {
-    saveState();
     // Also save critical inputs as dedicated cloud keys so they survive browser clears
     if (agentId === '0' && fieldId === 'resume') {
       saveToCloud('input_resume', el.value);
@@ -2566,18 +2646,39 @@ function getInp(agentId, fieldId) {
   return val;
 }
 
+function checklistKey(agentId, idx) {
+  var text = (((AGENTS[agentId]||{}).checklist||[])[idx] || ('item-'+idx));
+  return String(text).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) || ('item-'+idx);
+}
+function migrateChecklistState() {
+  if (!STATE.checklistState) STATE.checklistState = {};
+  Object.keys(STATE.checklistState).forEach(function(agentId){
+    var cur=STATE.checklistState[agentId]||{}, next={}, changed=false;
+    Object.keys(cur).forEach(function(k){
+      if (/^\d+$/.test(k)) { next[checklistKey(agentId, Number(k))]=!!cur[k]; changed=true; }
+      else next[k]=!!cur[k];
+    });
+    if(changed) STATE.checklistState[agentId]=next;
+  });
+}
+function checklistChecked(agentId, idx) {
+  var state=(STATE.checklistState||{})[agentId]||{};
+  return !!(state[checklistKey(agentId,idx)] || state[idx]);
+}
 function toggleCheck(agentId, idx) {
   if (!STATE.checklistState) STATE.checklistState = {};
   if (!STATE.checklistState[agentId]) STATE.checklistState[agentId] = {};
-  STATE.checklistState[agentId][idx] = !STATE.checklistState[agentId][idx];
+  var key=checklistKey(agentId,idx);
+  STATE.checklistState[agentId][key] = !checklistChecked(agentId,idx);
+  delete STATE.checklistState[agentId][idx];
   var items = document.querySelectorAll('#checklist_'+agentId+' .checklist-item');
   var item = items[idx];
   if (item) {
-    var bx = item.querySelector('.check-box'), tx = item.querySelector('.check-text'), ck = STATE.checklistState[agentId][idx];
+    var bx = item.querySelector('.check-box'), tx = item.querySelector('.check-text'), ck = STATE.checklistState[agentId][key];
     if (bx) { bx.classList.toggle('checked',ck); var m = bx.querySelector('.check-mark'); if (m) m.style.display = ck?'block':'none'; }
     if (tx) tx.classList.toggle('checked',ck);
   }
-  saveState();
+  saveState('checklist:' + agentId);
 }
 
 function copyOutput(id) {
@@ -2636,13 +2737,7 @@ function escHtml(t) {
 // escape backslashes first, then quotes, then strip newlines (which would
 // otherwise terminate the string literal outright).
 function escJs(t) {
-  return String(t)
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/"/g, '&quot;')
-    .replace(/\r?\n/g, ' ')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return JSON.stringify(String(t)).slice(1, -1).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 }
 
 // Translates a raw HTTP status / Anthropic error body into a message a
@@ -2750,6 +2845,7 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
 
     if (!sawMessageStop) {
       var partialNote = fullText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(fullText) + '</div>' : '';
+      if (!STATE.savedOutputs) STATE.savedOutputs = {}; STATE.savedOutputs[id+'_incomplete']=true; if(fullText) STATE.savedOutputs[id]=fullText; saveState('output:'+id);
       if (out) out.innerHTML = '<div class="error-box"><strong>The connection was interrupted before the response finished generating.</strong> Click Generate again — a second attempt usually succeeds.' + partialNote + '</div>';
       if (btn) { btn.disabled = false; btn.innerHTML = '<span>'+btnLabel+'</span>'; }
       clearTimeout(_eeTimeout);
@@ -2758,7 +2854,7 @@ async function callClaudeWithMsgs(id, msgs, lastPrompt, btn, btnLabel, filename)
 
     // Save output
     if (!STATE.savedOutputs) STATE.savedOutputs = {};
-    STATE.savedOutputs[id] = fullText;
+    STATE.savedOutputs[id] = fullText; STATE.savedOutputs[id+'_incomplete'] = false;
     if (STATE.plan === 'pro') {
       STATE.conversationHistory.push({role:'user', content:lastPrompt});
       STATE.conversationHistory.push({role:'assistant', content:fullText});
@@ -2966,7 +3062,7 @@ async function generateAgent0B() {
   if (STATE.completedAgents.indexOf('0b') === -1) STATE.completedAgents.push('0b');
   var navN = document.getElementById('nav-0b');
   if (navN) navN.classList.add('complete');
-  saveState();
+  saveState('output:2.5');
   updateProgress();
 
   // Re-render Agent 3 to show all outputs with download buttons
@@ -5717,7 +5813,8 @@ function sanitizeDownloadFilename(name) {
     .replace(/[\\/:*?"<>|]+/g, '_')
     .replace(/\s+/g, '_')
     .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '') || 'ExecEdge_Document';
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80) || 'ExecEdge_Document';
 }
 
 function downloadAsDoc(text, filename, title) {
@@ -6107,7 +6204,7 @@ function renderAgent075() {
     html += '<div class="checklist-header">Completion Checklist — Gate to Agent 3</div>';
     var cl = STATE.checklistState['0.75'] || {};
     AGENTS['0.75'].checklist.forEach(function(item, idx) {
-      var ck = cl[idx] || false;
+      var ck = checklistChecked('0.75', idx);
       html += '<div class="checklist-item" onclick="toggleCheck(\'0.75\',' + idx + ')"><div class="check-box' + (ck ? ' checked' : '') + '"><span class="check-mark">✓</span></div><div class="check-text' + (ck ? ' checked' : '') + '">' + item + '</div></div>';
     });
     html += '</div>';
@@ -6535,6 +6632,8 @@ function renderAgent2_5() {
   html += '<div class="output-box" id="output_2.5_diff">';
   if (savedDiff) {
     html += '<span>' + escHtml(savedDiff) + '</span>';
+  } else if (STATE.savedOutputs['2.5_diff_failed']) {
+    html += '<div class="error-box">The customized resume was saved, but the change log generation failed. Click Generate again to retry the audit; your resume above is unaffected.</div>';
   } else {
     html += '<span class="output-placeholder">The annotated change log will appear here — every edit explained with the reason (keyword match, positioning, ATS, recruiter readability).</span>';
   }
@@ -6550,7 +6649,7 @@ function renderAgent2_5() {
     var cl = STATE.checklistState['2.5'] || {};
     var clItems = AGENTS['2.5'].checklist;
     clItems.forEach(function(item, idx) {
-      var ck = cl[idx] || false;
+      var ck = checklistChecked('2.5', idx);
       html += '<div class="checklist-item" onclick="toggleCheck(\'2.5\',' + idx + ')"><div class="check-box' + (ck?' checked':'') + '"><span class="check-mark">✓</span></div><div class="check-text' + (ck?' checked':'') + '">' + item + '</div></div>';
     });
     html += '</div>';
@@ -6736,13 +6835,16 @@ async function generateAgent2_5() {
     var msg2 = (e.name === 'AbortError') ? 'Generation timed out after 3 minutes.' : e.message;
     var partial2 = e.partialText ? '<br><br><strong>What was received before the interruption:</strong><div class="output-box" style="margin-top:8px">' + escHtml(e.partialText) + '</div>' : '';
     if (outDiff) outDiff.innerHTML = '<div class="error-box">Error generating change log: ' + escHtml(msg2) + partial2 + '</div>';
-    diffText = '';
+    if (!STATE.savedOutputs) STATE.savedOutputs = {};
+    STATE.savedOutputs['2.5_diff_failed'] = true;
+    STATE.savedOutputs['2.5_diff_incomplete'] = !!e.partialText;
+    saveState('output:2.5');
   }
 
   // Save outputs
   if (!STATE.savedOutputs) STATE.savedOutputs = {};
   STATE.savedOutputs['2.5_custom'] = customText;
-  STATE.savedOutputs['2.5_diff']   = diffText;
+  if (diffText) { STATE.savedOutputs['2.5_diff'] = diffText; STATE.savedOutputs['2.5_diff_failed'] = false; STATE.savedOutputs['2.5_diff_incomplete'] = false; }
   STATE.savedOutputs['2.5_path_used'] = bestPath || '';
   STATE.savedOutputs['2.5_company'] = company;
   if (STATE.completedAgents.indexOf('2.5') === -1) STATE.completedAgents.push('2.5');
@@ -7611,10 +7713,7 @@ function renderSearchDashboard() {
   return html;
 }
 
-function getSavedVideoBrandMeta() {
-  try { return JSON.parse((STATE.savedOutputs||{})['6e_video_meta'] || '[]'); }
-  catch(e) { return []; }
-}
+function getSavedVideoBrandMeta() { return safeJsonParse((STATE.savedOutputs||{})['6e_video_meta'], []); }
 
 function renderDashboardVideoSection() {
   var videos = getSavedVideoBrandMeta();
@@ -8226,16 +8325,7 @@ function canGenerate() {
   return true;
 }
 
-window.addEventListener('beforeunload', function() {
-  if (mockState && mockState.stream) {
-    mockState.stream.getTracks().forEach(function(t){ t.stop(); });
-  }
-  if (mockPreviewStream) {
-    mockPreviewStream.getTracks().forEach(function(t){ t.stop(); });
-  }
-  if (mockMicInterval) clearInterval(mockMicInterval);
-  flushCloudSave();
-});
+window.addEventListener('beforeunload', function() { stopAllMediaStreams(); flushCloudSave(); });
 
 
 // Built-in QA diagnostics: static checks available from the browser console as runExecEdgeSelfTest().
